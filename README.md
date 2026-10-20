@@ -181,6 +181,7 @@ resume-portfolio-site/
     ├── check_content.js             # 内容和网站文件夹检查（需要 Node.js）
     ├── split_pdf.py                 # 拆分合并的 PDF（需要 Python 和 pypdf）
     ├── health_check.js              # 维护模式的定期体检：时效、链接、线上与本地是否一致
+    ├── screenshot.js                # 截全页图检查页面，把速览页打印成简历 PDF（需要 Node.js 22、Chrome）
     └── publish_github_pages.js      # 发布到 GitHub Pages（需要 Node.js、git、已登录的 gh）
 ```
 
@@ -241,6 +242,7 @@ node scripts/health_check.js 我的简历网站/site --url https://用户名.git
 - `assets/template/`, a no-build static site with hash routing, up to 3 languages incl. RTL, 6 styles, dark mode, a lightbox, document visibility levels and a printable one-pager
 - `scripts/check_content.js`, a content and site-folder checker
 - `scripts/health_check.js`, a health check for the maintenance mode (stale dates, broken links, live vs. local)
+- `scripts/screenshot.js`, full-page screenshots at desktop and phone width (waits for lazy images) and one-pager PDFs
 
 **Maintenance mode:** after the site is live, users come back with "update my website" and their site folder or URL. The agent reads the change log and publish log, runs a health check, updates only what changed (and everything that depends on it), logs the change, and republishes to the same address. The publish script refuses to overwrite edits made directly on GitHub.
 

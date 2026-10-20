@@ -48,7 +48,7 @@
 2. 判断每一页属于哪份文件，记下页码范围（比如"第 2–3 页：TUM 工作证明"）。
 3. 拆分：`python3 scripts/split_pdf.py 文件.pdf --out 我的简历网站/_work/materials "1:aws-certificate" "2-3:tum-arbeitszeugnis" …`。每份文件生成一个 PDF 和一张缩略图。脚本会提醒有哪些页没被拆出来，**每一页都要有归属**。
 4. 每份文件单独编号（M03a、M03b…）、单独写资料卡、单独决定公开级别。比如证书可以公开，同一个 PDF 里带出生日期的工作证明只写"可按需提供"。
-5. 要公开的文件，把拆出来的 PDF 和缩略图复制进 `site/assets/docs/` 和 `site/assets/img/`，在 `content.js` 的 `documents` 里写 `file` 和 `thumbnail`。
+5. 要公开的文件，把拆出来的 PDF 和缩略图复制进 `site/assets/docs/` 和 `site/assets/img/`，在 `content.js` 的 `documents` 里写 `file` 和 `thumbnail`。不公开原件的文件（`on-request`、`summary`）拆分时在文件名后加 `:private`，只生成 48 像素宽的缩略图；原件和清楚的缩略图都不要放进 `site/`。
 
 ### 其他材料
 

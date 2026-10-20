@@ -18,7 +18,8 @@ const { spawnSync } = require("child_process");
 const args = process.argv.slice(2);
 const urlFlag = args.indexOf("--url");
 const liveUrl = urlFlag >= 0 ? args[urlFlag + 1] : null;
-const siteArg = args.find((a, i) => !a.startsWith("--") && i !== urlFlag + 1);
+// 网站文件夹是第一个既不是 --开关、也不是 --url 后面那个网址的参数
+const siteArg = args.find((a, i) => !a.startsWith("--") && !(urlFlag >= 0 && i === urlFlag + 1));
 if (!siteArg) { console.log("用法：node scripts/health_check.js <网站文件夹> [--url 线上网址] [--no-links]"); process.exit(2); }
 const siteDir = path.resolve(siteArg);
 const contentFile = path.join(siteDir, "content.js");

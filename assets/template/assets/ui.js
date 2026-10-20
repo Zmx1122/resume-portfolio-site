@@ -6,6 +6,7 @@ window.UI = {
   de: {
     skip: "Zum Inhalt springen",
     colon: ": ",
+    comma: ", ",
     milestones: "Mein Weg",
     journey: "Stationen",
     honors: "Auszeichnungen",
@@ -120,6 +121,7 @@ window.UI = {
   en: {
     skip: "Skip to content",
     colon: ": ",
+    comma: ", ",
     milestones: "My path",
     journey: "Where I've been",
     honors: "Honours",
@@ -234,6 +236,7 @@ window.UI = {
   zh: {
     skip: "跳到正文",
     colon: "：",
+    comma: "，",
     milestones: "一路升级",
     journey: "我的路线",
     honors: "荣誉",
@@ -277,7 +280,7 @@ window.UI = {
     present: "至今",
     expected_until: "预计 {date}",
     location: "所在地",
-    available: "可入职",
+    available: "求职意向",
     available_from: "{date} 起",
     native: "母语",
     problem: "背景",

@@ -24,7 +24,7 @@
 
 1. 复制 `site/index.html` 三次，分别命名为 `preview-1.html`、`preview-2.html`、`preview-3.html`（放在 `site/` 里，和 `index.html` 同一层）。
 2. 在每个文件里，把 `id="style-css"` 那一行的风格文件名换成要预览的风格，例如 `assets/styles/editorial.css`。
-3. 告诉用户三个文件的完整位置和对应的风格名称，请TA双击打开，看首页和一个故事页，回一个编号。能直接替用户打开文件或截图的话，直接发三张截图更省事。
+3. 告诉用户三个文件的完整位置和对应的风格名称，请TA双击打开，看首页和一个故事页，回一个编号。能运行命令的话，用 `node scripts/screenshot.js 我的简历网站/site --file preview-1.html --pages "de/"`（`--file` 换成每个预览文件）截图，直接发三张截图更省事。
 4. 用户选定后，**删掉三个预览文件**（它们不应该被发布），按 `components.md` 第 5 节把风格写进 `index.html` 和 `content.js`。
 
 不要让用户自己在网址后面加参数（`?style=`），这对非技术用户太难。用户说"你定"或"跳过"，就用第一推荐。

@@ -34,7 +34,7 @@ window.SITE = {
 
 ## 2. 通用规则
 
-- **日期**统一写成 `"YYYY-MM"`（需要精确到日时写 `"YYYY-MM-DD"`）。显示格式由页面按语言自动生成，例如德语显示 `04/2024`、中文显示 `2024 年 4 月`。还在进行中的经历，不写 `endDate`。
+- **日期**统一写成 `"YYYY-MM"`（需要精确到日时写 `"YYYY-MM-DD"`）。显示格式由页面按语言自动生成，例如英语显示 `Apr 2024`、德语显示 `Apr. 2024`、中文显示 `2024年4月`（没有空格）。自己在文字里写日期时，也用和页面一样的写法。还在进行中的经历，不写 `endDate`。
 - **id** 用小写英文和连字符，例如 `"muster-dashboard"`。故事的 id 同时是网址的一部分（`#/de/story/muster-dashboard`），所以起一个看得懂的名字，起好之后不要改。
 - **sources** 记录这一条内容的来源：`M` 开头是资料池里的材料，`I` 开头是采访回答，例如 `["M03", "I08"]`。每个经历、故事、证书、引用都要有 `sources`。它不会显示在网站上，但让你和用户随时能查"这句话是从哪来的"。
 - **没有的信息就不写这个字段**，不要写空字符串、`"n/a"`、`"暂无"`。页面看到字段不存在，就不显示那一块。
@@ -93,6 +93,7 @@ ui: {
   | 期刊、会议、论文题目 | 保持原文；中文页面可以在后面加中文说明 | `"IEEE CASE 2024"`、`"Journal of Manufacturing Systems"` |
   | 课程名 | 用成绩单上的正式名称；网站其他语言可以翻译，必要时括号附原名 | `{ de: "Maschinelles Lernen", en: "Machine Learning", zh: "机器学习" }` |
   | 职位 | 以正式职位为准（见下一条）；英文职位在德国招聘里很常见，德语页面也可以用英文职位 | `"Data Engineer"` |
+  | 没有官方译名的学校、机构、职位 | 不要自己编译名或音译。英文用用户自己英文简历或 LinkedIn 上的写法；中文用通行译名，没有就保留原文（可以在括号里加一句说明）。德语职位没有官方英文版时，英文页面保留德语原文（检查脚本"德语和英语一样"的提醒可以忽略） | `"Werkstudentin Qualitätsmanagement"` |
 
   检查脚本会提醒写成普通字符串的学校名和城市名，以及看起来没有翻译的内容（中文里没有汉字、德语和英语一字不差）。提醒里属于上表"保持原文"的，可以忽略。
 - **每种语言单独通读一遍**。写完后，按语言分别把所有内容读一遍，找出混进来的其他语言：英语句子里的德语引号 „…“、英语里的德语成绩词（"gut"）、中文里没翻译的德语词（"Übung" 要写成"习题课（Übung）"）、中文里的英文半角标点。引号和标点用这种语言的写法：德语 „…“，英语 "…"，中文 “…” 和全角标点。
@@ -117,6 +118,7 @@ ui: {
 | `layout` | `"compact"`（紧凑型单页）或 `"editorial"`（编辑型多页）；不写时按故事数量自动选，见 `information-architecture.md` 第 3 节 |
 | `sections` | 紧凑型首页的版块顺序，可选的值：`"stories"`、`"experience"`、`"education"`（写了它，教育会从经历里单独拿出来成为一个版块）、`"publications"`、`"skills"`、`"documents"`、`"about"`。不写时用 `["stories", "experience", "publications", "skills", "documents", "about"]`；没有内容的版块自动不显示 |
 | `updated` | 内容更新日期 |
+| `cv` | 可选。控制"速览"页（一页纸简历）显示多少内容，网站其他页面不变，用来把速览页压到一页：`{ highlights: 3, publications: 3, awards: 3, certificates: 3, skillCategories: ["ai", "engineering"] }`。每项都可以不写；`highlights` 是每段经历最多几条要点，论文和奖项按日期取最新的几项 |
 
 ### basics：基本信息
 
@@ -160,10 +162,10 @@ ui: {
 | `studyType` | 译。例如 "Master of Science" |
 | `area` | 译。专业 |
 | `startDate`、`endDate` | 还在读的不写 `endDate`，写 `expectedEnd` |
-| `score` | `{ value: "1.7", scale: "DE" }`。只有用户同意公开成绩时才写 |
+| `score` | `{ value: "1.7", scale: "DE" }`。只有用户同意公开成绩时才写。小数点在各语言写法不同时，`value` 写成多语言对象：`{ de: "1,7", en: "1.7", zh: "1.7" }` |
 | `focus` | `[译]`，3–5 个专业方向关键词（Schwerpunkte），从成绩单的模块分组和课程归纳出来，用岗位里会出现的词；网站和一页简历都会显示 |
-| `courses` | `[{ name: 译, grade, ects }]`，4–8 门相关课程 |
-| `thesis` | `{ title: 译, grade, story: "故事 id" }` |
+| `courses` | `[{ name: 译, grade: 译, ects }]`，4–8 门相关课程。成绩是文字时（"sehr gut"）要翻译：`{ de: "sehr gut", en: "very good", zh: "优秀" }`，不要让德语成绩词出现在英文页面上 |
+| `thesis` | `{ title, grade: 译, story: "故事 id" }`。`title` 用论文封面上的原题；成绩同上，要翻译 |
 | `stories`、`evidence`、`sources` | |
 
 ### projects：项目（课程项目、个人项目、比赛）
@@ -174,7 +176,7 @@ ui: {
 
 故事是网站上最有分量的内容：一段经历、一个项目或一篇论文的完整讲述，对应一个故事详情页。数量通常 3–8 个，其中 1–4 个设为精选。精选宁缺毋滥：内容单薄的故事不要为了凑数设成精选。
 
-**一个故事只挂在一个地方**：只在它所属的经历（或教育、项目）的 `stories` 里列一次。比赛故事如果已经由 `awards` 的 `story` 指向，就不要再列进教育的 `stories`，否则时间线上会出现两次。
+**一个故事只挂在一个地方**：只在它所属的经历（或教育、项目）的 `stories` 里列一次。奖项的 `story` 也指向同一个故事时，页面会自动把这条奖项从时间线上隐藏（经历那里已经有链接），不会出现两次。所以**故事仍然要列进所属条目的 `stories`**，否则时间线上就没有链接了。
 
 | 字段 | 说明 |
 |---|---|
@@ -189,7 +191,7 @@ ui: {
 | `problem` | 译。背景和要解决的问题 |
 | `actions` | 每一项译。用户亲手做了什么，2–5 条 |
 | `outcome` | 译。结果 |
-| `metrics` | `[{ value: "~10 h", label: 译, sources }]`，只放有来源的数字，卡片上最多显示 1–2 个 |
+| `metrics` | `[{ value: "~10 h", label: 译, sources }]`，只放有来源的数字，卡片上最多显示 1–2 个。`value` 里有小数点或文字时，写成多语言对象：`{ de: "0,142 → 0,041", en: "0.142 → 0.041", zh: "0.142 → 0.041" }` |
 | `media` | `[{ src, type: "image" \| "pdf" \| "video" \| "link", alt: 译, caption: 译 }]`；每张图都要有说明文字 |
 | `skills` | 技能 id |
 | `evidence` | 文件 id |
@@ -214,7 +216,7 @@ ui: {
 
 1. **核心技能卡片**：`core: true` 的技能（挑 3–4 个，和求职方向最相关、用得最久的）。卡片显示"从哪年开始 · 用了多久"、使用年限条、用过的经历路径（例如 TU Darmstadt → TUM → Bliro，能链接到故事的会自动链接），和 `summary` 一句话。没有标 `core` 时，页面自动挑用在最多段经历里的 3 个，但没有 `summary`，效果差很多。
 2. **技能 × 经历矩阵**：每行一项技能，每列一段经历（`work`、`education`、`projects`，按时间排）。一段经历用到某项技能 = 条目自己的 `skills` 里有它，**或者**它下面的故事的 `skills` 里有它。圆点链接到用到这项技能的故事。
-3. **使用年限条**：把用到这项技能的经历时间段合并后计算，重叠的时间不重复算，按半年向下取整。
+3. **使用年限条**：把用到这项技能的时间段合并后计算，重叠的时间不重复算，按半年向下取整。条目自己的 `skills` 里有这项技能，整段经历都算；**只是它下面的某个故事用到**，只算这个故事的时间（故事的 `period` 写了 `start`/`end` 就按它，只写了 `date` 按这个日期往前 6 个月算）。所以：本科只有毕业论文用过仿真，就把仿真写进论文故事的 `skills`，不要写进本科条目的 `skills`，否则会显示"用了 4 年"。
 
 所以：
 
@@ -223,7 +225,7 @@ ui: {
 - 经历名字长（大学全称、公司全称）时写 `short`，否则矩阵的列会很宽。
 - 没有挂在任何经历或故事上的技能，矩阵里这一行是空的：问用户在哪里用过；实在没有，就不放。
 
-`category` 只用于分组显示，按用户的领域起名，例如 `"data"`、`"engineering"`、`"design"`、`"business"`、`"tools"`。
+`category` 只用于分组显示。**优先用内置的分类**，它们在每种语言里都有现成的名字：`"ai"`、`"automation"`、`"data"`、`"engineering"`、`"design"`、`"business"`、`"research"`、`"tools"`、`"other"`。确实需要别的分类（比如 `"teaching"`）时，在 `ui` 里给每种语言写上名字：`ui: { de: { cat_teaching: "Lehre" }, en: { cat_teaching: "Teaching" }, zh: { cat_teaching: "教学" } }`，否则页面上会直接显示 `teaching`。检查脚本会提醒。
 
 ### languages：语言能力
 
@@ -256,6 +258,8 @@ ui: {
 ### publications：论文与发表
 
 在 JSON Resume 的基础上（`name`、`publisher` 可译、`releaseDate`、`url`）增加下面的字段。`name` 是**正式题目原文**，所有语言都一样，写成一个字符串。
+
+题目和作者从最权威的来源抄：DOI 页面或 Crossref（`https://api.crossref.org/works/<DOI>`）> 出版社页面 > 论文 PDF 首页 > Google Scholar > 用户的简历或 LinkedIn。没有 DOI 时，向用户要论文 PDF 或出版社链接（每轮一个索要）；实在没有，就用简历或 LinkedIn 上的写法，在 `facts.md` 里标"题目未核对"，并在内容确认稿里请用户确认。合作作者不知道时，`authors` 至少写用户自己的名字（例如 `"Mei Chen, …"`），列表里才能加粗。
 
 页面参照 Google Scholar 显示成列表：题目（链接）、作者（用户自己的名字自动加粗，要和 `basics.name` 写法一致）、出处和日期，最后是标签。**不放封面截图**：截图看不清、和题目重复，还把列表拉得很长。`summary` 不显示，论文的背景和贡献写进 `story` 指向的故事。
 
@@ -314,7 +318,7 @@ ui: {
 | `date` | |
 | `visibility` | `"public"`、`"summary"`、`"on-request"`、`"private"`，含义见 `material-pool.md` 第 3 节 |
 | `file` | 只有 `public` 才写，例如 `"assets/docs/testdaf.pdf"` |
-| `thumbnail` | 缩略图，`public` 和 `on-request` 都可以有（`on-request` 的缩略图要模糊处理或用图标代替） |
+| `thumbnail` | 缩略图。`public` 的用正常缩略图。`on-request` 和 `summary` 的**只能用 48 像素宽的小图**（`split_pdf.py` 里文件名后加 `:private`），或者不放：网页上的模糊只是样式，图片文件本身谁都能下载，清楚的缩略图会泄露出生日期、学号。检查脚本会把太清楚的缩略图报成错误 |
 | `summary` | 译。`summary` 和 `on-request` 的文件在卡片上显示这段话 |
 
 `private` 的文件不出现在网站上；保留在 `content.js` 里，只是为了让证据关系完整。**`private` 和 `summary` 的原件不要复制进 `site/` 文件夹**，因为文件一旦上传到部署平台，知道路径的人就能下载。
@@ -352,9 +356,9 @@ contact: {
 4. `metrics` 里的每个数字都有来源。
 5. 精选故事 1–4 个，每个都有至少一张带说明的图，或者至少一份证据。
 6. `consent` 不是 `"yes"` 的推荐信引用不会显示。
-7. `visibility` 不是 `public` 的文件，`site/` 文件夹里没有它的原件；`site/assets/img/` 和 `site/assets/docs/` 里没有用不到的文件（比如模板的演示文件）。
-9. 没有写进来再隐藏的信息（`show: false`），可以开始工作的日期不早于今天。
+7. `visibility` 不是 `public` 的文件，`site/` 文件夹里没有它的原件，缩略图是 48 像素宽的小图；`site/assets/img/` 和 `site/assets/docs/` 里没有用不到的文件（比如模板的演示文件）。
 8. 没有空字符串、`"n/a"` 之类的占位内容。
+9. 没有写进来再隐藏的信息（`show: false`），可以开始工作的日期不早于今天。
 
 ## 6. 和 JSON Resume 的对应关系
 

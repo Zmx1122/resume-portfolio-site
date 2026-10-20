@@ -94,17 +94,19 @@ if (langs.length > 1) {
 // ---------- 译文是不是真的翻译了 ----------
 
 // 1. 学校、城市、颁发机构这类名称，各语言通常有不同的正式写法，不应该只写一种
+// 只有学校、协会、基金会、部委这类机构才通常有各语言的正式名称；公司、期刊、会议保持原文，不提醒
+const ORG_RE = /(universit|hochschule|institut|akademie|academy|college|ministeri|ministry|stiftung|foundation|verband|verein|association|kammer|chamber|大学|学院|协会|基金会|研究所)/i;
 const PLACE_FIELDS = [
   ["education", "institution", '学校名称各语言通常有正式写法，例如 { de: "Technische Universität München", en: "Technical University of Munich", zh: "慕尼黑工业大学" }'],
   ["work", "location", '城市名各语言写法不同，例如 { de: "München", en: "Munich", zh: "慕尼黑" }'],
-  ["awards", "awarder", "颁发机构有其他语言的正式名称时，写成多语言对象"],
-  ["certificates", "issuer", "颁发机构有其他语言的正式名称时，写成多语言对象"],
+  ["awards", "awarder", "颁发机构有其他语言的正式名称时，写成多语言对象", ORG_RE],
+  ["certificates", "issuer", "颁发机构有其他语言的正式名称时，写成多语言对象", ORG_RE],
 ];
 if (langs.length > 1) {
-  for (const [sec, field, hint] of PLACE_FIELDS) {
+  for (const [sec, field, hint, only] of PLACE_FIELDS) {
     for (const x of S[sec] || []) {
       const v = x && x[field];
-      if (typeof v === "string" && v.trim()) warn(`${sec}.${x.id || "?"}.${field}："${v}" 只有一种写法，所有语言都会显示它。${hint}`);
+      if (typeof v === "string" && v.trim() && (!only || only.test(v))) warn(`${sec}.${x.id || "?"}.${field}："${v}" 只有一种写法，所有语言都会显示它。${hint}`);
     }
   }
   const city = S.basics && S.basics.location && S.basics.location.city;
@@ -113,7 +115,7 @@ if (langs.length > 1) {
 
 // 2. 内容看起来没有翻译：中文里没有汉字；德语和英语一字不差
 const CJK = /[㐀-鿿぀-ヿ가-힯]/;
-const SKIP_SAME = /^(skills|publications\.\d+\.name|stories\.[^.]+\.metrics|ui)/;
+const SKIP_SAME = /^(skills|publications\.\d+\.name|stories\.[^.]+\.metrics|ui)|\.(courses\[\d+\]\.name|institution|thesis\.title|position|awarder|issuer)$/;
 function checkLang(node, p) {
   if (Array.isArray(node)) return node.forEach((v, i) => checkLang(v, `${p}[${i}]`));
   if (!node || typeof node !== "object") return;
@@ -236,6 +238,25 @@ for (const [i, m] of (S.milestones || []).entries()) {
   if (m.story) ref(`milestones[${i}].story`, m.story, ids.stories, "故事");
 }
 if ((S.journey || []).length === 1) warn("journey 只有一站，路线小地图至少需要两站才会显示");
+// 路线小地图的文字放不下时会被截断成"…"：名字写短一点（全名放在经历里）
+const textUnits = (t) => [...String(t || "")].reduce((n, c) => n + (c.charCodeAt(0) > 0x2e80 ? 2 : 1), 0);
+for (const [i, st] of (S.journey || []).entries()) {
+  for (const [field, max] of [["name", 22], ["place", 30], ["label", 30]]) {
+    const v = field === "place" && st.place && st.years
+      ? Object.fromEntries((typeof st.place === "object" ? Object.entries(st.place) : [["", st.place]]).map(([l, t]) => [l, `${t} · ${st.years}`]))
+      : st[field];
+    const vals = v && typeof v === "object" ? Object.entries(v) : v ? [["", v]] : [];
+    for (const [l, t] of vals) if (textUnits(t) > max) warn(`journey[${i}].${field}${l ? "." + l : ""}："${t}" 太长，路线小地图上会被截断成"…"。写一个短名字（例如 "TU Musterstadt"），全名留在经历里`);
+  }
+}
+
+// 技能分类：只有内置的分类有现成的翻译；自己起的分类要在 ui 里给每种语言写上名字，否则页面和简历 PDF 上会直接显示英文 id
+const BUILTIN_CATS = ["ai", "automation", "data", "engineering", "design", "business", "research", "tools", "other"];
+for (const cat of new Set((S.skills || []).map((sk) => sk.category || "other"))) {
+  if (BUILTIN_CATS.includes(cat)) continue;
+  const missing = langs.filter((l) => !(S.ui && S.ui[l] && S.ui[l]["cat_" + cat]));
+  if (missing.length) warn(`skills 分类 "${cat}" 不是内置分类，${missing.join("、")} 没有名字，页面上会直接显示 "${cat}"。改用内置分类（${BUILTIN_CATS.join("、")}），或者在 ui.<语言> 里写 cat_${cat}`);
+}
 
 // ---------- 设置 ----------
 
@@ -261,6 +282,32 @@ needFile(b.image, "basics.image");
 if (b.cv) for (const [l, u] of Object.entries(b.cv)) needFile(u, `basics.cv.${l}`);
 for (const s of S.stories || []) (s.media || []).forEach((m, i) => { if ((m.type || "image") !== "link") needFile(m.src, `stories.${s.id}.media[${i}]`); });
 for (const d of S.documents || []) { needFile(d.file, `documents.${d.id}.file`); needFile(d.thumbnail, `documents.${d.id}.thumbnail`); }
+
+// 不公开原件的文件（on-request、summary）：网页上的模糊只是样式，图片文件本身谁都能下载。
+// 所以缩略图必须本来就很小、看不清字（split_pdf.py 的 ":private" 会生成 48 像素宽的缩略图）
+function imageWidth(file) {
+  try {
+    const buf = fs.readFileSync(file);
+    if (buf.slice(1, 4).toString() === "PNG") return buf.readUInt32BE(16);
+    if (buf[0] === 0xff && buf[1] === 0xd8) {
+      for (let i = 2; i < buf.length - 9;) {
+        if (buf[i] !== 0xff) { i++; continue; }
+        const marker = buf[i + 1];
+        if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) return buf.readUInt16BE(i + 7);
+        i += 2 + buf.readUInt16BE(i + 2);
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+for (const d of S.documents || []) {
+  if (!d.thumbnail || d.visibility === "public") continue;
+  const f = path.join(siteDir, String(d.thumbnail).split(/[?#]/)[0]);
+  if (!fs.existsSync(f)) continue;
+  const w = imageWidth(f);
+  if (w === null) warn(`documents.${d.id}.thumbnail：读不出图片尺寸。这份文件不公开原件，确认缩略图上看不清任何字（最好用 PNG，宽不超过 120 像素）`);
+  else if (w > 120) err(`documents.${d.id}.thumbnail：这份文件不公开原件（${d.visibility}），但缩略图有 ${w} 像素宽，任何人都能下载下来看清上面的出生日期、学号等。用 split_pdf.py 在文件名后加 ":private" 重新生成（48 像素宽），或者删掉 thumbnail`);
+}
 (S.publications || []).forEach((p, i) => needFile(p.image || p.media, `publications[${i}].image`));
 
 const indexHtml = path.join(siteDir, "index.html");

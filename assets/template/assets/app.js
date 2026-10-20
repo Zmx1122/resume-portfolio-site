@@ -75,6 +75,7 @@
   }
   function period(start, end, expected) {
     var b = end ? fmtDate(end) : expected ? U("expected_until", { date: fmtDate(expected) }) : U("present");
+    if (start && end && fmtDate(start) === fmtDate(end)) return b; // 一个月内的项目只显示一次
     return start ? fmtDate(start) + " – " + b : b;
   }
   function typeLabel(t) {
@@ -125,7 +126,20 @@
     if (USES[skillId]) return USES[skillId];
     var stations = STATIONS.filter(function (e) { return stationUses(e, skillId); });
     // 重叠的时间段合并后再算月数，避免同一段时间算两次
-    var spans = stations.map(function (e) { return [ym(e.startDate), stationEnd(e)]; }).sort(function (a, b) { return a[0] - b[0]; });
+    // 条目自己的 skills 里有它：整段经历都算。只是某个故事用到它：只算故事自己的时间
+    //（故事写了 start/end 就按它；只写了一个 date，按这个日期往前 6 个月算），不把整个学位都算进去
+    var spans = [];
+    stations.forEach(function (e) {
+      if ((e.skills || []).indexOf(skillId) >= 0) return spans.push([ym(e.startDate), stationEnd(e)]);
+      stationStories(e, skillId).forEach(function (st) {
+        var p = st.period || {};
+        var a = ym(p.start || p.date), b = p.end ? ym(p.end) : p.start ? (p.date ? ym(p.date) : NOW_YM) : a;
+        if (a == null) return spans.push([ym(e.startDate), stationEnd(e)]);
+        if (!p.start && p.date) a = b - 5;
+        spans.push([Math.max(a, ym(e.startDate)), Math.max(Math.max(a, ym(e.startDate)), Math.min(b, stationEnd(e)))]);
+      });
+    });
+    spans.sort(function (a, b) { return a[0] - b[0]; });
     var merged = [];
     spans.forEach(function (s) {
       var last = merged[merged.length - 1];
@@ -183,7 +197,7 @@
     ms = (ms || []).slice(0, max || 3);
     if (!ms.length) return "";
     return html`<dl class="metrics">${ms.map(function (m) {
-      return html`<div class="metric"><dt class="metric-value">${m.value}</dt><dd class="metric-label">${T(m.label)}</dd></div>`;
+      return html`<div class="metric"><dt class="metric-value">${T(m.value)}</dt><dd class="metric-label">${T(m.label)}</dd></div>`;
     })}</dl>`;
   }
 
@@ -208,14 +222,19 @@
   function storyCard(s, opts) {
     opts = opts || {};
     var im = opts.noImage ? null : firstImage(s);
-    return html`<article class="card story-card${im ? " has-image" : ""}">
+    var m0 = (s.metrics || [])[0];
+    var filler = !im && opts.filler;
+    return html`<article class="card story-card${im || filler ? " has-image" : ""}">
       <a class="card-link" href="${href("story", s.id)}">
         ${im ? html`<div class="card-media">${img(im.src, T(im.alt), "card-img")}</div>` : ""}
+        ${filler ? html`<div class="card-media card-media-text" aria-hidden="true">${m0
+          ? html`<span class="cmt-value">${T(m0.value)}</span><span class="cmt-label">${T(m0.label)}</span>`
+          : html`<span class="cmt-label">${storyKicker(s)}</span>`}</div>` : ""}
         <div class="card-body">
           <p class="kicker">${storyKicker(s)}</p>
           <h3 class="card-title">${T(s.title)}</h3>
           ${s.standfirst ? html`<p class="card-text">${T(s.standfirst)}</p>` : ""}
-          ${metricsList(s.metrics, 2)}
+          ${metricsList(filler && m0 ? (s.metrics || []).slice(1) : s.metrics, 2)}
           <span class="card-more">${U("view_story")} <span aria-hidden="true" class="arrow">→</span></span>
         </div>
       </a>
@@ -323,13 +342,24 @@
       var a = pts[i - 1], c = pts[i], my = (a.y + c.y) / 2;
       d += " C" + a.x + " " + my + " " + c.x + " " + my + " " + c.x + " " + c.y;
     }
+    // 估算文字宽度（中日韩字符算两个），超过就截断加"…"，不让文字跑出框外
+    var fit = function (s, max) {
+      s = String(s || "");
+      var w = 0, out = "";
+      for (var k = 0; k < s.length; k++) {
+        w += s.charCodeAt(k) > 0x2e80 ? 2 : 1;
+        if (w > max) return out.replace(/\s+$/, "") + "…";
+        out += s[k];
+      }
+      return s;
+    };
     var pin = function (x, y) {
       return raw('<path class="jm-pin" d="M' + x + " " + (y + 2) + " c-9 -12 -14 -18 -14 -25 a14 14 0 1 1 28 0 c0 7 -5 13 -14 25 z\"/>" +
         '<circle class="jm-pin-dot" cx="' + x + '" cy="' + (y - 23) + '" r="5"/>');
     };
     return html`<figure class="journey" aria-label="${U("journey")}">
       <figcaption class="journey-title">${U("journey")}</figcaption>
-      <svg class="journey-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${stops.map(function (st) { return st.name; }).join(" → ")}">
+      <svg class="journey-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${stops.map(function (st) { return T(st.name); }).join(" → ")}">
         <path class="jm-route" d="${d}"/>
         ${pts.map(function (p, i) {
           var left = i % 2 === 1;
@@ -337,9 +367,10 @@
           var anchor = left ? "end" : "start";
           return html`<g class="jm-stop">
             ${pin(p.x, p.y)}
-            <text x="${tx}" y="${p.y - 22}" text-anchor="${anchor}" class="jm-name">${p.st.name}</text>
-            <text x="${tx}" y="${p.y - 4}" text-anchor="${anchor}" class="jm-sub">${[T(p.st.place), p.st.years].filter(Boolean).join(" · ")}</text>
-            ${p.st.label ? html`<text x="${tx}" y="${p.y + 13}" text-anchor="${anchor}" class="jm-label">${T(p.st.label)}</text>` : ""}
+            <title>${[T(p.st.name), T(p.st.place), p.st.years, T(p.st.label)].filter(Boolean).join(" · ")}</title>
+            <text x="${tx}" y="${p.y - 22}" text-anchor="${anchor}" class="jm-name">${fit(T(p.st.name), 22)}</text>
+            <text x="${tx}" y="${p.y - 4}" text-anchor="${anchor}" class="jm-sub">${fit([T(p.st.place), p.st.years].filter(Boolean).join(" · "), 30)}</text>
+            ${p.st.label ? html`<text x="${tx}" y="${p.y + 13}" text-anchor="${anchor}" class="jm-label">${fit(T(p.st.label), 30)}</text>` : ""}
           </g>`;
         })}
       </svg>
@@ -373,7 +404,7 @@
     return html`<section class="section section-stories" id="stories" aria-labelledby="stories-title">
       <div class="wrap">
         ${sectionTitle("stories", U("featured"))}
-        <div class="cards cards-featured">${feat.map(function (s) { return storyCard(s); })}</div>
+        <div class="cards cards-featured">${feat.map(function (s) { return storyCard(s, { filler: feat.some(firstImage) }); })}</div>
         ${rest.length ? html`<h3 class="subhead">${U("more_stories")}</h3>
           <div class="cards cards-compact">${rest.map(function (s) { return storyCard(s, { noImage: true }); })}</div>` : ""}
       </div>
@@ -417,16 +448,16 @@
       </li>`;
     }
     if (e.kind === "education") {
-      var score = it.score && it.score.show !== false ? it.score.value : "";
+      var score = it.score && it.score.show !== false ? T(it.score.value) : "";
       return html`<li class="tl-item tl-education">
         <p class="tl-date">${period(it.startDate, it.endDate, it.expectedEnd)}</p>
         <div class="tl-body">
           <h3 class="tl-title">${[T(it.studyType), T(it.area)].filter(Boolean).join(", ")} <span class="tl-org">· ${it.url ? html`<a href="${safeUrl(it.url)}" target="_blank" rel="noopener">${T(it.institution)}</a>` : T(it.institution)}</span></h3>
           ${score ? html`<p class="tl-meta">${U("grade")}${U("colon")}${score}</p>` : ""}
           ${(it.honors || []).length ? html`<p><span class="label">${U("honors")}${U("colon")}</span> ${it.honors.map(T).join(" · ")}</p>` : ""}
-          ${it.thesis ? html`<p><span class="label">${U("thesis")}${U("colon")}</span> ${it.thesis.story && get("stories", it.thesis.story) ? html`<a href="${href("story", it.thesis.story)}">${T(it.thesis.title)}</a>` : T(it.thesis.title)}${it.thesis.grade ? " (" + it.thesis.grade + ")" : ""}</p>` : ""}
+          ${it.thesis ? html`<p><span class="label">${U("thesis")}${U("colon")}</span> ${it.thesis.story && get("stories", it.thesis.story) ? html`<a href="${href("story", it.thesis.story)}">${T(it.thesis.title)}</a>` : T(it.thesis.title)}${it.thesis.grade ? " (" + T(it.thesis.grade) + ")" : ""}</p>` : ""}
           ${(it.focus || []).length ? html`<p><span class="label">${U("focus")}${U("colon")}</span> ${it.focus.map(T).join(" · ")}</p>` : ""}
-          ${(it.courses || []).length ? html`<p><span class="label">${U("courses")}${U("colon")}</span> ${it.courses.map(function (c) { return T(c.name) + (c.grade ? " (" + c.grade + ")" : ""); }).join(" · ")}</p>` : ""}
+          ${(it.courses || []).length ? html`<p><span class="label">${U("courses")}${U("colon")}</span> ${it.courses.map(function (c) { return T(c.name) + (c.grade ? " (" + T(c.grade) + ")" : ""); }).join(" · ")}</p>` : ""}
           ${storyLinks((it.stories || []).filter(function (id) { return !(it.thesis && it.thesis.story === id); }))}
         </div>
       </li>`;
@@ -708,7 +739,7 @@
   function quoteBlock(q) {
     return html`<figure class="quote">
       <blockquote lang="${q.original && T(q.text) === (q.text && q.text[q.original]) ? q.original : L}"><p>${T(q.text)}</p></blockquote>
-      <figcaption>— ${T(q.author)}${q.authorTitle ? html`, <span class="muted">${T(q.authorTitle)}</span>` : ""}</figcaption>
+      <figcaption>— ${T(q.author)}${q.authorTitle ? html`${U("comma")}<span class="muted">${T(q.authorTitle)}</span>` : ""}</figcaption>
     </figure>`;
   }
 
@@ -866,7 +897,7 @@
         <p class="back"><a href="${href("skills")}"><span aria-hidden="true" class="arrow arrow-back">←</span> ${U("all_skills")}</a></p>
         <h1 class="section-title">${U("stories_with_skill", { name: T(s.name) })}</h1>
         ${uses.entries.length ? html`<div class="skill-usage"><p class="core-skill-meta">${sinceLabel(uses)} · ${durationLabel(uses.months)}</p>${yearBar(uses, skillRange())}</div>` : ""}
-        ${uses.stories.length ? html`<div class="cards cards-featured">${uses.stories.map(function (x) { return storyCard(x); })}</div>` : ""}
+        ${uses.stories.length ? html`<div class="cards cards-featured">${uses.stories.map(function (x) { return storyCard(x, { filler: uses.stories.some(firstImage) }); })}</div>` : ""}
         ${uses.entries.length ? html`<h2 class="subhead">${U("used_in")}</h2><ul class="plain-list">${uses.entries.map(function (w) {
           var what = T(w.position) || T(w.studyType);
           return html`<li><strong>${what || orgName(w)}</strong>${what ? html` · ${orgName(w)}` : ""} <span class="muted">${period(w.startDate, w.endDate, w.expectedEnd)}</span></li>`;
@@ -881,8 +912,19 @@
     var email = b.email && b.email.show !== false ? b.email.value : "";
     var phone = b.phone && b.phone.show !== false ? b.phone.value : "";
     var contact = [b.location && T(b.location.city), email, phone].concat((b.profiles || []).map(function (p) { return p.url ? p.url.replace(/^https?:\/\/(www\.)?/, "") : ""; })).filter(Boolean);
+    // meta.cv 控制速览页显示多少内容（网站其他页面不受影响），用来把速览页压到一页
+    var CVC = META.cv || {};
+    var cap = function (arr, n) { return typeof n === "number" ? arr.slice(0, n) : arr; };
     var groups = {};
-    list("skills").forEach(function (s) { (groups[s.category || "other"] = groups[s.category || "other"] || []).push(T(s.name)); });
+    list("skills").forEach(function (s) {
+      var cat = s.category || "other";
+      if (CVC.skillCategories && CVC.skillCategories.indexOf(cat) < 0) return;
+      (groups[cat] = groups[cat] || []).push(T(s.name));
+    });
+    var cvPubs = cap(list("publications").slice().sort(function (a, b) { return (b.releaseDate || "").localeCompare(a.releaseDate || ""); }), CVC.publications);
+    var cvAwards = cap(list("awards").slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); }), CVC.awards);
+    var cvCerts = cap(list("certificates"), CVC.certificates);
+    var certTitle = [cvCerts.length ? U("certificates") : "", cvAwards.length ? U("awards") : ""].filter(Boolean).join(" / ");
     return html`<section class="cv">
       <div class="wrap cv-sheet">
         <div class="cv-tools no-print">
@@ -900,10 +942,10 @@
         </header>
         ${list("work").length ? html`<h2>${U("work")}</h2>${list("work").map(function (w) {
           return html`<div class="cv-entry"><p class="cv-when">${period(w.startDate, w.endDate)}</p><div><p><strong>${T(w.position)}</strong> · ${T(w.name)}${T(w.location) ? ", " + T(w.location) : ""}</p>
-            ${(w.highlights || []).length ? html`<ul>${w.highlights.map(function (h) { return html`<li>${T(h)}</li>`; })}</ul>` : ""}</div></div>`;
+            ${(w.highlights || []).length ? html`<ul>${cap(w.highlights, CVC.highlights).map(function (h) { return html`<li>${T(h)}</li>`; })}</ul>` : ""}</div></div>`;
         })}` : ""}
         ${list("education").length ? html`<h2>${U("education")}</h2>${list("education").map(function (e) {
-          return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${T(e.institution)}${e.score && e.score.show !== false ? " · " + U("grade") + " " + e.score.value : ""}</p>
+          return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${T(e.institution)}${e.score && e.score.show !== false ? " · " + U("grade") + " " + T(e.score.value) : ""}</p>
             ${(e.focus || []).length ? html`<p class="muted">${U("focus")}${U("colon")}${e.focus.map(T).join(" · ")}</p>` : ""}
             ${e.thesis ? html`<p class="muted">${U("thesis")}${U("colon")}${T(e.thesis.title)}</p>` : ""}</div></div>`;
         })}` : ""}
@@ -911,9 +953,9 @@
           var label = U("cat_" + cat);
           return html`<div><dt>${label === "cat_" + cat ? cat : label}</dt><dd>${groups[cat].join(", ")}</dd></div>`;
         })}</dl>` : ""}
-        ${list("publications").length ? html`<h2>${U("publications")}</h2><ul>${list("publications").map(function (p) { return html`<li>${T(p.name)}${p.publisher ? ", " + T(p.publisher) : ""} ${fmtDate(p.releaseDate)}</li>`; })}</ul>` : ""}
+        ${cvPubs.length ? html`<h2>${U("publications")}</h2><ul>${cvPubs.map(function (p) { return html`<li>${T(p.name)}${p.publisher ? ", " + T(p.publisher) : ""} ${fmtDate(p.releaseDate)}</li>`; })}</ul>` : ""}
         ${list("languages").length ? html`<h2>${U("languages")}</h2><p>${list("languages").map(function (l) { return T(l.language) + " " + (l.cefr === "native" ? "(" + U("native") + ")" : l.cefr ? "(" + l.cefr + ")" : ""); }).join(" · ")}</p>` : ""}
-        ${list("certificates").length + list("awards").length ? html`<h2>${U("certificates")} / ${U("awards")}</h2><ul>${list("certificates").map(function (c) { return html`<li>${T(c.name)}${c.level ? " " + c.level : ""}, ${T(c.issuer) || ""} ${fmtDate(c.date)}</li>`; })}${list("awards").map(function (a) { return html`<li>${T(a.title)}, ${T(a.awarder) || ""} ${fmtDate(a.date)}</li>`; })}</ul>` : ""}
+        ${cvCerts.length + cvAwards.length ? html`<h2>${certTitle}</h2><ul>${cvCerts.map(function (c) { return html`<li>${T(c.name)}${c.level ? " " + c.level : ""}, ${T(c.issuer) || ""} ${fmtDate(c.date)}</li>`; })}${cvAwards.map(function (a) { return html`<li>${T(a.title)}, ${T(a.awarder) || ""} ${fmtDate(a.date)}</li>`; })}</ul>` : ""}
       </div>
     </section>`;
   }
@@ -965,6 +1007,21 @@
     }
     if (!firstRender) document.getElementById("main").focus({ preventScroll: true });
     firstRender = false;
+    scrollHints();
+  }
+
+  // 横向滚动的里程碑：还能往右（往左）滚时加上 class，样式在边上淡出，提示后面还有内容
+  function scrollHints() {
+    [].forEach.call(document.querySelectorAll(".milestone-path"), function (el) {
+      var update = function () {
+        var x = Math.abs(el.scrollLeft);
+        el.classList.toggle("can-scroll-end", x + el.clientWidth < el.scrollWidth - 4);
+        el.classList.toggle("can-scroll-start", x > 4);
+      };
+      el.addEventListener("scroll", update, { passive: true });
+      window.addEventListener("resize", update);
+      update();
+    });
   }
 
   // ---------- 风格与主题 ----------

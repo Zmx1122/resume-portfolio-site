@@ -7,16 +7,20 @@
     python3 scripts/split_pdf.py 合并文件.pdf --list
 
     会列出每一页开头的文字。扫描件没有文字时显示"（扫描页，没有文字）"，
-    这时用 --previews 生成每页的小图，打开看一眼再判断：
+    这时用 --previews 生成每页的预览图（默认宽 1000 像素，扫描的信件也能看清），打开看一眼再判断：
     python3 scripts/split_pdf.py 合并文件.pdf --list --previews 输出文件夹
 
 第二步：按文件拆分
     python3 scripts/split_pdf.py 合并文件.pdf --out 输出文件夹 \\
-        "1:aws-hackathon-certificate" "2-3:tum-arbeitszeugnis" "4:vdi-urkunde" "5-6:muster-gmbh-zeugnis"
+        "1:hackathon-certificate" "2-3:arbeitszeugnis:private" "4:urkunde" "5-6:muster-gmbh-zeugnis:private"
 
     每一项是"页码范围:文件名"，页码从 1 开始。每份文件会生成：
       输出文件夹/<文件名>.pdf          拆出来的 PDF
       输出文件夹/<文件名>-thumb.png    第一页的缩略图（用于网站上的文件卡片）
+
+    不公开原件的文件（on-request、summary：工作证明、成绩单、学位证书……）在后面加 ":private"。
+    这样缩略图只有 48 像素宽，放大也看不清任何字。网页上的模糊效果只是样式，图片文件本身是能下载的，
+    清楚的缩略图会把出生日期、学号等泄露出去。
 
 拆出来的文件先放在工作文件夹里（比如 我的简历网站/_work/materials/），
 只有确定公开的文件才复制进 site/assets/docs/。
@@ -33,6 +37,9 @@ try:
     from pypdf import PdfReader, PdfWriter
 except ImportError:
     sys.exit("需要 pypdf：请运行 pip install pypdf（或 pip3 install pypdf），然后再试。")
+
+
+PRIVATE_WIDTH = 48
 
 
 def thumbnail(pdf_path, png_path, width=600):
@@ -64,7 +71,8 @@ def main():
     ap.add_argument("pdf")
     ap.add_argument("parts", nargs="*", help='"页码范围:文件名"，例如 "2-3:tum-arbeitszeugnis"')
     ap.add_argument("--list", action="store_true", help="列出每一页开头的文字")
-    ap.add_argument("--previews", metavar="文件夹", help="和 --list 一起用：把每一页渲染成小图")
+    ap.add_argument("--previews", metavar="文件夹", help="和 --list 一起用：把每一页渲染成预览图")
+    ap.add_argument("--preview-width", type=int, default=1000, help="预览图宽度（像素），默认 1000")
     ap.add_argument("--out", metavar="文件夹", help="拆分结果放在哪里")
     args = ap.parse_args()
 
@@ -85,7 +93,7 @@ def main():
                     with open(one, "wb") as f:
                         w.write(f)
                     png = os.path.join(args.previews, f"page-{i+1:02d}.png")
-                    ok = thumbnail(one, png, width=400)
+                    ok = thumbnail(one, png, width=args.preview_width)
                     print(f"  预览：{png if ok else '无法生成（需要 pdftoppm 或 sips）'}")
         return
 
@@ -97,7 +105,9 @@ def main():
     for spec in args.parts:
         if ":" not in spec:
             ap.error(f"缺少文件名：{spec}（写成 \"页码范围:文件名\"）")
-        rng, name = spec.split(":", 1)
+        bits = spec.split(":")
+        rng, name = bits[0], bits[1]
+        private = len(bits) > 2 and bits[2].strip().lower() == "private"
         name = re.sub(r"[^a-z0-9-]+", "-", name.strip().lower()).strip("-")
         if not name:
             ap.error(f"文件名只能用英文字母、数字和连字符：{spec}")
@@ -110,8 +120,9 @@ def main():
         with open(pdf_path, "wb") as f:
             w.write(f)
         thumb = os.path.join(args.out, f"{name}-thumb.png")
-        ok = thumbnail(pdf_path, thumb)
-        print(f"第 {a}–{b} 页 → {pdf_path}" + (f"，缩略图 {thumb}" if ok else "（没有生成缩略图）"))
+        ok = thumbnail(pdf_path, thumb, width=PRIVATE_WIDTH if private else 600)
+        kind = "（不公开的文件：缩略图只有 48 像素宽）" if private else ""
+        print(f"第 {a}–{b} 页 → {pdf_path}" + (f"，缩略图 {thumb}{kind}" if ok else "（没有生成缩略图）"))
 
     left = [p for p in range(1, total + 1) if p not in used]
     if left:

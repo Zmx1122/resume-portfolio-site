@@ -63,7 +63,7 @@ site/
 | 技能标签 | 首页技能版块 | 按类别分组的技能标签，不显示数字 | `skills` |
 | 技能筛选 | `#/<语言>/skills/<技能 id>` | 用到这项技能的故事和经历 | 自动统计 |
 | 证书与文件 | 证书与文件版块或页面 | 语言能力、证书（验证链接）、荣誉、文件墙 | `languages`、`certificates`、`awards`、`documents` |
-| 文件卡片 | 文件墙、故事页的"证据" | 缩略图、类型、日期、标题、状态（"可按需提供"或"摘录"） | `documents`；`private` 不显示，`on-request` 的缩略图自动模糊 |
+| 文件卡片 | 文件墙、故事页的"证据" | 缩略图、类型、日期、标题、状态（"可按需提供"或"摘录"） | `documents`；`private` 不显示。`on-request`、`summary` 的缩略图在页面上会加模糊样式，但**图片文件本身必须是 48 像素宽的小图**（`split_pdf.py` 加 `:private`），否则别人能下载原图看清内容 |
 | 文件详情弹窗 | 点击非公开文件 | 摘要、相关引用、"发邮件索取"按钮 | `documents.summary`、`quotes` |
 | 图片放大 | 点击故事配图或公开的图片文件 | 大图、说明、上一张/下一张；Esc 关闭，方向键切换 | `media`、`documents.file` |
 | 故事页 | `#/<语言>/story/<id>` | 结构见 `information-architecture.md` 第 6 节 | `stories` 及其引用的条目 |
@@ -97,16 +97,35 @@ site/
 | 头像改成圆形或方形 | 风格文件里 `.avatar` 的 `border-radius` |
 | 想要模板没有的新版块 | 先问清楚要放什么。大多数需求可以用现有组件表达（比如"志愿经历"用 `work` 加 `type: "Ehrenamt"`）。确实需要新组件时，在 `app.js` 里仿照现有版块添加，并在 `base.css` 里加样式 |
 
-## 从"速览"页生成简历 PDF
+## 截图检查页面
 
-用户的原始简历里有电话、住址等不公开信息时，可以把网站的"速览"页打印成 PDF，内容和网站一致。电脑上有 Chrome 时：
+改完页面后自己看一遍，不要只靠检查脚本。电脑上有 Chrome 和 Node.js 22 以上时：
 
 ```bash
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --no-pdf-header-footer \
-  --virtual-time-budget=6000 --print-to-pdf=site/assets/docs/cv-en.pdf "file:///…/site/index.html#/en/cv"
+node scripts/screenshot.js 我的简历网站/site --pages "de/,en/skills,zh/story/<故事 id>" --mobile
 ```
 
-（Windows 上 Chrome 通常在 `C:\Program Files\Google\Chrome\Application\chrome.exe`。）每种语言各生成一份，写进 `basics.cv`，然后运行检查脚本：它会读 PDF 里的文字，确认没有电话等信息。
+截图存进 `我的简历网站/_work/screens/`（电脑宽 1280，加 `--mobile` 再截一遍手机宽 390）。脚本会等所有图片加载完再截全页图。**不要直接用 `chrome --screenshot`**：模板的图片是懒加载，截出来是一个个灰框；`--window-size=390` 的实际排版宽度也不是 390。
+
+看截图时重点看：文字有没有跑出框（路线小地图的站名）、一行卡片是否整齐、手机上有没有横向滚动、每种语言里有没有混进别的语言。
+
+## 从"速览"页生成简历 PDF
+
+用户的原始简历里有电话、住址等不公开信息时，把网站的"速览"页打印成 PDF，内容和网站一致：
+
+```bash
+node scripts/screenshot.js 我的简历网站/site --cv
+```
+
+它会给每种语言生成 `site/assets/docs/cv-<语言>.pdf`（没有页眉页脚），并报告每份有几页。脚本**不会改 `content.js`**：生成后你自己把这几个文件写进 `basics.cv`（例如 `cv: { de: "assets/docs/cv-de.pdf", en: "assets/docs/cv-en.pdf" }`），再运行检查脚本，它会读 PDF 里的文字，确认没有电话等信息。
+
+**速览页最好只有一页。** 超过一页时，用 `content.js` 的 `meta.cv` 限制速览页上显示的内容（网站其他页面不变），按这个顺序试，每改一次重新生成 PDF 看页数：
+
+1. `highlights: 3`：每段经历最多 3 条要点
+2. `skillCategories: [...]`：技能只留和目标岗位相关的类别
+3. `publications: 3`、`awards: 3`：论文和奖项只留最新的 3 项，其余在网站上看
+
+两页也可以接受，但第一页必须是最重要的内容。
 
 ## 6. 不要做的事
 
