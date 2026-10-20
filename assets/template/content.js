@@ -299,9 +299,9 @@ window.SITE = {
       title: { de: "TestDaF-Zeugnis", en: "TestDaF certificate", zh: "TestDaF 成绩证书" },
       kind: "certificate",
       date: "2023-11",
-      visibility: "public",
-      file: "assets/img/testdaf.svg",
-      thumbnail: "assets/img/testdaf.svg"
+      visibility: "preview",
+      preview: "assets/img/docs/testdaf-preview.png",
+      thumbnail: "assets/img/docs/testdaf-thumb.png"
     },
     {
       id: "doc-transcript-msc",

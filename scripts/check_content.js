@@ -191,7 +191,9 @@ for (const q of S.quotes || []) {
   needSources(q, `quotes.${q.id}`);
 }
 for (const d of S.documents || []) {
-  if (!["public", "summary", "on-request", "private"].includes(d.visibility)) err(`documents.${d.id}：visibility 只能是 public / summary / on-request / private`);
+  if (!["public", "preview", "summary", "on-request", "private"].includes(d.visibility)) err(`documents.${d.id}：visibility 只能是 public / preview / summary / on-request / private`);
+  if (d.visibility === "public") warn(`documents.${d.id}：public 的文件任何人都能下载原件。证书、Urkunde、获奖证书、推荐信这类文件建议改成 preview（只显示带水印的预览图，网站里不放原件），见 content-model.md 的"文件"`);
+  if (d.visibility === "preview" && !d.preview && !d.thumbnail) err(`documents.${d.id}：preview 的文件需要 preview（带水印的预览图），用 split_pdf.py 的 ":preview" 生成`);
   if (d.visibility !== "public" && d.file) err(`documents.${d.id}：不公开的文件不能写 file，原件也不要放进网站文件夹`);
 }
 for (const s of S.skills || []) if (typeof s.name !== "string" && !isLangObj(s.name)) err(`skills.${s.id}.name：应该是文字或多语言对象`);
@@ -281,7 +283,7 @@ const b = S.basics || {};
 needFile(b.image, "basics.image");
 if (b.cv) for (const [l, u] of Object.entries(b.cv)) needFile(u, `basics.cv.${l}`);
 for (const s of S.stories || []) (s.media || []).forEach((m, i) => { if ((m.type || "image") !== "link") needFile(m.src, `stories.${s.id}.media[${i}]`); });
-for (const d of S.documents || []) { needFile(d.file, `documents.${d.id}.file`); needFile(d.thumbnail, `documents.${d.id}.thumbnail`); }
+for (const d of S.documents || []) { needFile(d.file, `documents.${d.id}.file`); needFile(d.thumbnail, `documents.${d.id}.thumbnail`); needFile(d.preview, `documents.${d.id}.preview`); }
 
 // 不公开原件的文件（on-request、summary）：网页上的模糊只是样式，图片文件本身谁都能下载。
 // 所以缩略图必须本来就很小、看不清字（split_pdf.py 的 ":private" 会生成 48 像素宽的缩略图）
@@ -300,8 +302,34 @@ function imageWidth(file) {
   } catch (e) {}
   return null;
 }
+// preview 的文件：预览图和缩略图都应该带水印（split_pdf.py 生成的 PNG 里写了一个标记）
+function hasWatermarkTag(file) {
+  try {
+    const buf = fs.readFileSync(file);
+    if (buf.slice(1, 4).toString() !== "PNG") return false;
+    for (let i = 8; i < buf.length - 12;) {
+      const len = buf.readUInt32BE(i), type = buf.slice(i + 4, i + 8).toString();
+      if ((type === "tEXt" || type === "iTXt") && buf.slice(i + 8, i + 8 + len).toString("latin1").includes("resume-portfolio-site watermark")) return true;
+      if (type === "IDAT" || type === "IEND") break;
+      i += 12 + len;
+    }
+  } catch (e) {}
+  return false;
+}
 for (const d of S.documents || []) {
-  if (!d.thumbnail || d.visibility === "public") continue;
+  if (d.visibility !== "preview") continue;
+  for (const key of ["preview", "thumbnail"]) {
+    if (!d[key]) continue;
+    const f = path.join(siteDir, String(d[key]).split(/[?#]/)[0]);
+    if (!fs.existsSync(f)) continue;
+    if (!hasWatermarkTag(f)) warn(`documents.${d.id}.${key}：看不出这张图带水印。preview 的文件用 split_pdf.py 的 ":preview" 和 --watermark 生成，水印画在图片里，别人另存也去不掉`);
+    const w = imageWidth(f);
+    if (w && w > 1400) warn(`documents.${d.id}.${key}：图片有 ${w} 像素宽，清晰到可以直接打印。预览图 1000 像素宽就够了`);
+  }
+}
+
+for (const d of S.documents || []) {
+  if (!d.thumbnail || d.visibility === "public" || d.visibility === "preview") continue;
   const f = path.join(siteDir, String(d.thumbnail).split(/[?#]/)[0]);
   if (!fs.existsSync(f)) continue;
   const w = imageWidth(f);

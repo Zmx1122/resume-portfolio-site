@@ -316,9 +316,10 @@ ui: {
 | `title` | 译 |
 | `kind` | `"reference"`（工作证明）、`"recommendation"`、`"certificate"`、`"transcript"`、`"degree"`、`"award"`、`"work-sample"`、`"publication"` |
 | `date` | |
-| `visibility` | `"public"`、`"summary"`、`"on-request"`、`"private"`，含义见 `material-pool.md` 第 3 节 |
-| `file` | 只有 `public` 才写，例如 `"assets/docs/testdaf.pdf"` |
-| `thumbnail` | 缩略图。`public` 的用正常缩略图。`on-request` 和 `summary` 的**只能用 48 像素宽的小图**（`split_pdf.py` 里文件名后加 `:private`），或者不放：网页上的模糊只是样式，图片文件本身谁都能下载，清楚的缩略图会泄露出生日期、学号。检查脚本会把太清楚的缩略图报成错误 |
+| `visibility` | `"public"`（可以下载原件）、`"preview"`（仅供查看：只有带水印的预览图）、`"summary"`、`"on-request"`、`"private"`，含义见 `material-pool.md` 第 3 节。**证书、Urkunde、获奖证书默认用 `preview`**，不要用 `public`，否则任何人都能下载原件拿去冒用 |
+| `file` | 只有 `public` 才写，例如 `"assets/docs/paper.pdf"` |
+| `preview` | `preview` 的文件写这一项：`split_pdf.py` 加 `:preview` 和 `--watermark` 生成的 `-preview.png`（1000 像素宽，水印画在图片里）。点开卡片看到的就是它 |
+| `thumbnail` | 缩略图。`public` 的用正常缩略图；`preview` 的用同时生成的带水印 `-thumb.png`。`on-request` 和 `summary` 的**只能用 48 像素宽的小图**（`split_pdf.py` 里文件名后加 `:private`），或者不放：网页上的模糊只是样式，图片文件本身谁都能下载，清楚的缩略图会泄露出生日期、学号。检查脚本会把太清楚的缩略图报成错误 |
 | `summary` | 译。`summary` 和 `on-request` 的文件在卡片上显示这段话 |
 
 `private` 的文件不出现在网站上；保留在 `content.js` 里，只是为了让证据关系完整。**`private` 和 `summary` 的原件不要复制进 `site/` 文件夹**，因为文件一旦上传到部署平台，知道路径的人就能下载。

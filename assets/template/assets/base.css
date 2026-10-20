@@ -361,6 +361,7 @@ dialog { color: var(--text); }
 .lb-frame > * { pointer-events: auto; }
 .lb-figure { margin: 0; max-width: min(1400px, 100%); max-height: 100%; display: flex; flex-direction: column; align-items: center; }
 .lb-img { max-height: calc(100vh - 140px); width: auto; max-width: 100%; object-fit: contain; }
+.lb-img, .doc-thumb { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
 .lb-figure figcaption { margin-block-start: 12px; font-size: 0.92rem; color: #e7e5e4; text-align: center; }
 .lb-count { color: #a8a29e; margin-inline-start: 8px; }
 .lightbox .icon-btn { color: #fff; font-size: 1.8rem; }

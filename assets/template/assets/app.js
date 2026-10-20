@@ -696,14 +696,18 @@
   function docCard(d) {
     var isPublic = d.visibility === "public" && safeUrl(d.file);
     var isImage = isPublic && /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(d.file);
-    var badge = d.visibility === "on-request" ? U("on_request") : d.visibility === "summary" ? U("summary_only") : "";
-    var thumb = d.thumbnail ? img(d.thumbnail, "", "doc-thumb" + (d.visibility === "public" ? "" : " is-muted")) : html`<span class="doc-icon" aria-hidden="true">▤</span>`;
+    // preview（仅供查看）：只放一张带水印的预览图，网站里没有原件，没有下载链接
+    var previewSrc = d.visibility === "preview" ? safeUrl(d.preview || d.thumbnail) : "";
+    var badge = d.visibility === "on-request" ? U("on_request") : d.visibility === "summary" ? U("summary_only") : previewSrc ? U("view_only") : "";
+    var clear = d.visibility === "public" || d.visibility === "preview";
+    var thumb = d.thumbnail ? img(d.thumbnail, "", "doc-thumb" + (clear ? "" : " is-muted")) : html`<span class="doc-icon" aria-hidden="true">▤</span>`;
     var inner = html`<span class="doc-media">${thumb}</span>
       <span class="doc-body">
         <span class="kicker">${docKindLabel(d)}${d.date ? " · " + fmtDate(d.date) : ""}</span>
         <span class="doc-title">${T(d.title)}</span>
         ${badge ? html`<span class="badge">${badge}</span>` : ""}
       </span>`;
+    if (previewSrc) return html`<li class="doc-card"><button type="button" class="doc-link" data-lightbox="${previewSrc}" data-caption="${T(d.title)} · ${U("view_only")}" data-group="docs">${inner}</button></li>`;
     if (isImage) return html`<li class="doc-card"><button type="button" class="doc-link" data-lightbox="${d.file}" data-caption="${T(d.title)}" data-group="docs">${inner}</button></li>`;
     if (isPublic) return html`<li class="doc-card"><a class="doc-link" href="${d.file}" target="_blank" rel="noopener">${inner}</a></li>`;
     return html`<li class="doc-card"><button type="button" class="doc-link" data-sheet="${d.id}">${inner}</button></li>`;
@@ -1094,6 +1098,10 @@
     sheet.querySelector(".sheet-close").setAttribute("aria-label", U("close"));
     sheet.showModal();
   }
+
+  // 证书预览图和放大图：不能拖拽、没有右键"另存为"。挡不住截图，真正的保护是图片里的水印
+  document.addEventListener("contextmenu", function (e) { if (e.target.closest(".doc-thumb, .lb-img")) e.preventDefault(); });
+  document.addEventListener("dragstart", function (e) { if (e.target.closest(".doc-thumb, .lb-img")) e.preventDefault(); });
 
   document.addEventListener("click", function (e) {
     // 再次点击当前页面的链接（例如紧凑型布局里的导航）：重新渲染，滚动到对应版块
