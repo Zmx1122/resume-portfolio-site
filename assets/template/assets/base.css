@@ -288,7 +288,8 @@ button { font: inherit; color: inherit; }
 .figure-btn { display: block; width: 100%; padding: 0; border: 0; background: var(--surface); cursor: zoom-in; border-radius: var(--radius); overflow: hidden; }
 .figure-img { width: 100%; }
 .figure figcaption { font-size: 0.88rem; color: var(--muted); margin-block-start: 8px; }
-.gallery { display: grid; gap: 0 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+/* auto-fit：两张图各占一半、一张图占满整行，左右始终和正文对齐，不会留出空列 */
+.gallery { display: grid; gap: 0 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
 .media-link { margin-block: 16px; }
 .story-foot .quotes { margin-block: 40px; }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-block-start: 48px; padding-block-start: 24px; border-block-start: var(--border); }
@@ -398,7 +399,9 @@ dialog { color: var(--text); }
 .pub-authors, .pub-meta, .pub-summary { margin: 0; font-size: 0.88rem; }
 .pub-body .small-link { margin-block-start: auto; padding-block-start: 6px; }
 .paper-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
-.paper-list .badge { vertical-align: 2px; }
+.paper-list li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.paper-title { line-height: 1.4; }
+.paper-meta { font-size: 0.9rem; }
 .cv-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* ---------- 页脚 ---------- */

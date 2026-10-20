@@ -686,7 +686,10 @@
         ${quotes.length ? html`<div class="quotes">${quotes.map(quoteBlock)}</div>` : ""}
         ${papers.length ? html`<div class="story-papers"><h2 class="subhead">${U("publications")}</h2><ul class="paper-list">${papers.map(function (p) {
           var link = safeUrl(p.url);
-          return html`<li>${p.role ? html`<span class="badge">${T(p.role)}</span> ` : ""}<strong>${link ? html`<a href="${link}" target="_blank" rel="noopener">${T(p.name)}</a>` : T(p.name)}</strong><br><span class="muted">${[p.authors, T(p.publisher), fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</span></li>`;
+          // 题目放在最前面并左对齐；长短不一的作者身份标签放在最后
+          return html`<li><strong class="paper-title">${link ? html`<a href="${link}" target="_blank" rel="noopener">${T(p.name)}</a>` : T(p.name)}</strong>
+            <span class="paper-meta muted">${[p.authors, T(p.publisher), fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</span>
+            ${p.role ? html`<span class="badge paper-role">${T(p.role)}</span>` : ""}</li>`;
         })}</ul></div>` : ""}
         ${evidence.length ? html`<div class="evidence"><h2 class="subhead">${U("evidence")}</h2><ul class="doc-grid doc-grid-small">${evidence.map(docCard)}</ul></div>` : ""}
         ${(s.skills || []).length ? html`<div class="story-skills"><h2 class="subhead">${U("skills_used")}</h2>${skillTags(s.skills)}</div>` : ""}
