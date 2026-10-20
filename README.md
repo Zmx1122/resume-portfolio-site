@@ -22,7 +22,7 @@
 |---|---|
 | 1 | **一个装着求职材料的文件夹**。有什么放什么：简历（几个版本都行）、LinkedIn 导出的 PDF（在自己的主页点"更多 → 存为 PDF"）、求职信、工作或实习证明、推荐信、证书、成绩单、获奖证书、头像、项目照片或截图。没有的不用找，AI 会问你。 |
 | 2 | **一个 AI 工具**。见下面"用哪个 AI"。 |
-| 3 | **一个邮箱**。最后发布网站时，用它注册一个免费账号。 |
+| 3 | **一个 GitHub 账号，并在终端里登录一次**（推荐，AI 就能自动帮你把网站发布到网上）。打开电脑的"终端"，输入 `gh auth login`，按提示选 GitHub.com → HTTPS → 用浏览器登录。还没装 `gh` 的话，先看[这里](references/deploy.md#41-准备-github每台电脑只需一次)，或者让 AI 教你。**没有 GitHub 也可以**，AI 会教你用 EdgeOne Pages，只需要一个邮箱注册。 |
 | 4 | **大约 1 小时**。 |
 
 ### 先看看做出来是什么样
@@ -63,8 +63,11 @@ flowchart TD
     B --> C["③ 看 AI 给的「内容确认稿」<br/>只检查：数字对不对、哪些文件会公开"]
     C --> D["④ 选一个网站风格<br/>打开 AI 给的三个预览，回一个编号；或者说「你定」"]
     D --> E["⑤ 打开做好的网站看一遍<br/>哪里不满意直接告诉 AI"]
-    E --> F["⑥ 注册一个免费账号<br/>把 AI 指给你的 site 文件夹拖上去"]
-    F --> G["⑦ 拿到链接<br/>放进简历、LinkedIn 和邮件签名"]
+    E --> F{"⑥ 发布到网上"}
+    F -->|已在终端登录 GitHub| G1["AI 自动发布到 GitHub Pages"]
+    F -->|没有 GitHub| G2["注册 EdgeOne Pages<br/>把 site 文件夹拖上去，网址发回给 AI"]
+    G1 --> H["⑦ 拿到网址<br/>放进简历、LinkedIn 和邮件签名"]
+    G2 --> H
 ```
 
 ### 每一步你要做什么
@@ -74,19 +77,36 @@ flowchart TD
 3. **确认内容**：AI 会给你一份"内容确认稿"。你只需要重点看两样：**网站上的数字对不对**，**哪些文件会公开**。没问题就回"可以"。不确定的数字，AI 默认不放。
 4. **选风格**：AI 会用你自己的内容做三个风格预览，你打开看一下，回一个编号。不想选就说"你定"，以后随时可以换。
 5. **看网站、提修改**：双击 AI 告诉你的 `index.html` 打开网站，哪里不满意直接说，比如"头像换成圆的""第二段经历写短一点"。
-6. **发布**：AI 会带你注册一个免费的网站发布平台（推荐 EdgeOne Pages），然后把 AI 指给你的 **`site` 文件夹**拖进网页里。注意只拖 `site` 这一个文件夹，不要拖外面那层。注册和登录由你自己完成，AI 不会碰你的密码。
+6. **发布**：AI 会先问你网站主要给谁看（见下面"三种发布方案"）。
+   - 你已经在终端里登录过 GitHub：AI 直接帮你发布，给你一个 `https://你的用户名.github.io/` 的网址。
+   - 没有 GitHub：AI 会教你注册 EdgeOne Pages，把 AI 指给你的 **`site` 文件夹**拖进网页（只拖 `site` 这一个文件夹，不要拖外面那层），然后把得到的网址发回给 AI 检查。
+
+   注册和登录都由你自己完成。不要把密码或令牌（token）发给 AI。
 7. **用起来**：把链接放进简历页眉、LinkedIn 的"精选"和联系信息、求职信签名、邮件签名。
+
+### 三种发布方案
+
+| 方案 | 适合 | 用什么 | 花费 |
+|---|---|---|---|
+| **① 海外为主**（默认） | 在德国、欧洲或其他国家求职 | GitHub Pages；没有 GitHub 就用 EdgeOne Pages | 免费 |
+| **② 全球都能打开** | 海外求职，也想让国内的人稳定打开 | 自己的域名 + EdgeOne Pages（全球可用区，不含中国大陆），不需要备案 | 域名每年约几欧元到十几欧元 |
+| **③ 国内为主** | 主要投国内岗位 | 自己的域名 + 国内服务器 + ICP 备案（需要身份证和国内手机号，通常要几周） | 域名费用 |
+
+免费平台给的默认网址在中国大陆都不稳定，所以想让国内的人稳定打开，就需要选 ② 或 ③。详细步骤见 [deploy.md](references/deploy.md)。
 
 ### 常见问题
 
-**一定要注册发布平台的账号吗？**
-想要一个能发给别人的链接，就需要注册一个（免费）。如果暂时只想自己看，或者打印成 PDF，可以不注册：网站在你自己电脑上双击就能打开，"速览"页可以直接打印或存成 PDF。
+**一定要注册账号吗？**
+想要一个能发给别人的网址，就需要一个免费账号：有 GitHub 就用 GitHub，没有就注册 EdgeOne Pages。如果暂时只想自己看，或者打印成 PDF，可以不注册：网站在你自己电脑上双击就能打开，"速览"页可以直接打印或存成 PDF。
 
 **要花钱吗？**
-不用。只有一种情况需要花钱：你想让**国内**的人也能稳定打开，需要买一个自己的域名，每年几欧元到十几欧元。
+方案 ① 不用。想让**国内**的人也能稳定打开（方案 ② 或 ③），需要买一个自己的域名，每年几欧元到十几欧元。
 
 **国内的家人能打开吗？**
-免费发布平台给的默认链接在国内都不稳定。不想买域名的话，可以把网站的"速览"页存成 PDF 发给家人。
+选方案 ① 的话不稳定。不想买域名，可以把网站的"速览"页存成 PDF 发给家人。
+
+**`gh auth login` 是什么？安全吗？**
+这是 GitHub 官方命令行工具的登录命令。你在浏览器里登录 GitHub，登录信息保存在你自己的电脑上，之后 AI 就能用它帮你发布网站。AI 不会看到你的密码。
 
 **我的个人信息安全吗？**
 你上传给 AI 的材料，会被你使用的那个 AI 服务处理。上传什么、网站上公开什么，**由你自己决定、自己负责**。AI 默认会建议不公开出生日期、住址、证件号、电话、成绩、签证信息、签名等，也会在发布前和你一起检查。发布前请你自己再看一遍网站。
@@ -120,7 +140,13 @@ flowchart TD
   - 图片放大查看；文件按公开级别显示
   - 一页纸速览，可直接打印
 - **检查脚本**：检查漏翻、对不上的引用、没有来源的数字、缺失的文件、网站文件夹里多余或不该公开的文件、风格设置是否一致、已经过去的日期等。
-- **部署指南**：EdgeOne Pages、Netlify、Cloudflare Pages、GitHub Pages，包括中国大陆访问的限制说明。
+- **一键发布到 GitHub Pages**（`scripts/publish_github_pages.js`）：
+  - 发布前先运行内容检查
+  - 只覆盖自己创建的仓库
+  - 用 GitHub 隐私邮箱提交
+  - 每次只上传一个全新的版本，不留下旧内容的历史
+  - 等新版本真正上线后才打印网址
+- **发布指南**：按"海外为主 / 全球 / 国内为主"三种方案，覆盖 GitHub Pages、EdgeOne Pages（手动上传、命令行、MCP）、自定义域名和 ICP 备案说明。
 
 ### 安装成 skill
 
@@ -146,7 +172,9 @@ resume-portfolio-site/
 │   ├── components.md                # 模板组件、生成步骤、常见修改
 │   └── deploy.md                    # 发布指南
 ├── assets/template/                 # 网页模板（自带虚构人物"小林"的演示内容）
-└── scripts/check_content.js         # 检查脚本（需要 Node.js）
+└── scripts/
+    ├── check_content.js             # 内容和网站文件夹检查（需要 Node.js）
+    └── publish_github_pages.js      # 发布到 GitHub Pages（需要 Node.js、git、已登录的 gh）
 ```
 
 ### 预览模板
@@ -171,7 +199,7 @@ node scripts/check_content.js assets/template/content.js 'S.work[0].position = "
 
 ### 已知限制
 
-- **中国大陆访问**：各平台的默认域名在国内都不稳定（`vercel.app` 基本打不开；EdgeOne Pages 的默认域名在中国大陆只能通过 3 小时有效的预览链接访问），稳定访问需要绑定自定义域名。
+- **中国大陆访问**：各平台的默认域名在国内都不稳定（`vercel.app` 基本打不开；EdgeOne Pages 的默认域名在中国大陆只能通过 3 小时有效的预览链接访问；CloudBase 默认域名仅供测试），稳定访问需要自定义域名，放在国内服务器上还需要 ICP 备案。EdgeOne Pages 的发布流程还没有用真实账号实测过。
 - **AI 能力差异**：不同 AI 工具读取 PDF 和图片、读写本地文件、运行脚本、操作浏览器的能力不同。`SKILL.md` 区分了完整模式和聊天模式，但没有在每一种工具里都实测过。
 - **翻译**：AI 翻译的版本最好请母语者检查。
 - **Arbeitszeugnis 解读**是业界惯例，不是法律规定。
@@ -192,7 +220,7 @@ node scripts/check_content.js assets/template/content.js 'S.work[0].position = "
 
 **resume-portfolio-site** is an AI skill that turns a job seeker's existing application documents into a multilingual, interactive personal resume website, and then walks them through publishing it as a public link. It is designed for non-technical users, with a focus on international students in Germany, but works for anyone.
 
-**For non-technical users:** put your documents in a folder, paste the prompt from Part 1 (it points the AI to this repo's `SKILL.md`) into an AI tool, answer its questions (at most three at a time; "skip" is always fine), confirm the numbers and the files that will be public, pick a style, then drag the generated `site` folder onto a free static host. AI tools that can work with local files do all the file handling. Chat-only AIs also work, but the user has to download the repo ZIP once and replace one file.
+**For non-technical users:** put your documents in a folder, paste the prompt from Part 1 (it points the AI to this repo's `SKILL.md`) into an AI tool, answer its questions (at most three at a time; "skip" is always fine), confirm the numbers and the files that will be public, pick a style, and publish: with a GitHub account and a one-time `gh auth login`, the AI publishes to GitHub Pages automatically; without GitHub, the user drags the generated `site` folder onto EdgeOne Pages. AI tools that can work with local files do all the file handling. Chat-only AIs also work, but the user has to download the repo ZIP once and replace one file.
 
 **For developers:** the repo contains:
 - `SKILL.md`, which sets out the workflow and covers both full and chat-only modes
