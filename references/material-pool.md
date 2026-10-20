@@ -32,7 +32,9 @@
 | 成绩与学位 | Notenspiegel, Transcript of Records, Leistungsübersicht, Bachelorzeugnis, Masterzeugnis, Urkunde (Hochschulgrad), Abiturzeugnis, 成绩单, 学位证, 毕业证 | `doc-types/transcript.md` |
 | 在读证明 | Immatrikulationsbescheinigung, Studienbescheinigung, Enrollment Certificate, 在读证明, 学籍证明 | `doc-types/enrollment.md` |
 | 获奖与奖学金 | Urkunde (Wettbewerb), Preis, Auszeichnung, Stipendium, Deutschlandstipendium, DAAD, Award, Scholarship, 获奖证书, 奖学金证明 | `doc-types/award.md` |
-| 其他 | 作品截图、项目照片、论文、海报、演示文稿、GitHub 链接、个人照片 | 本文件"其他材料" |
+| 毕业论文和学期论文 | Bachelorarbeit, Masterarbeit, Studienarbeit, Abstract, Kurzfassung, Fazit, 毕业论文, 摘要, 结论 | `doc-types/thesis.md` |
+| 作品和项目材料 | 项目报告、Projektbericht、展示幻灯片、代码仓库（GitHub/GitLab）、海报、演示视频、截图 | `doc-types/work-sample.md` |
+| 其他 | 项目照片、活动照片、个人照片 | 本文件"其他材料" |
 
 **容易混的两种 Zeugnis**：德语里 Zeugnis 既可以指雇主出具的工作证明（Arbeitszeugnis），也可以指学校的成绩或学位证明（Bachelorzeugnis、Abiturzeugnis）。看出具方：公司 → 工作证明；学校 → 成绩与学位。
 

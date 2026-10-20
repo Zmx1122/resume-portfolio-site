@@ -5,6 +5,7 @@
 window.UI = {
   de: {
     skip: "Zum Inhalt springen",
+    colon: ": ",
     milestones: "Mein Weg",
     journey: "Stationen",
     honors: "Auszeichnungen",
@@ -107,6 +108,7 @@ window.UI = {
   },
   en: {
     skip: "Skip to content",
+    colon: ": ",
     milestones: "My path",
     journey: "Where I've been",
     honors: "Honours",
@@ -209,6 +211,7 @@ window.UI = {
   },
   zh: {
     skip: "跳到正文",
+    colon: "：",
     milestones: "一路升级",
     journey: "我的路线",
     honors: "荣誉",

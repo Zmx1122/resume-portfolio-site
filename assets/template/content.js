@@ -28,7 +28,7 @@ window.SITE = {
     },
     image: "assets/img/avatar.svg",
     email: { value: "xiao.lin@example.com" },
-    location: { city: "München", countryCode: "DE" },
+    location: { city: { de: "München", en: "Munich", zh: "慕尼黑" }, countryCode: "DE" },
     profiles: [
       { network: "LinkedIn", url: "https://www.linkedin.com/in/example" },
       { network: "GitHub", url: "https://github.com/example" }
@@ -53,7 +53,7 @@ window.SITE = {
         zh: "Werkstudent 数据分析"
       },
       type: "Werkstudent",
-      location: "München",
+      location: { de: "München", en: "Munich", zh: "慕尼黑" },
       startDate: "2024-04",
       endDate: "2025-09",
       summary: {
@@ -83,7 +83,7 @@ window.SITE = {
   education: [
     {
       id: "msc",
-      institution: "Technische Hochschule Beispielstadt",
+      institution: { de: "Technische Hochschule Beispielstadt", en: "Beispielstadt University of Technology", zh: "示例市理工大学" },
       url: "https://example.org",
       studyType: { de: "Master of Science", en: "Master of Science", zh: "理学硕士" },
       area: { de: "Data Science", en: "Data Science", zh: "数据科学" },

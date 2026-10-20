@@ -274,17 +274,21 @@ button { font: inherit; color: inherit; }
 .story { padding-block: 40px var(--section-gap); }
 .back { margin-block-end: 24px; font-size: 0.92rem; }
 .back a { text-decoration: none; }
-.story-head { max-width: calc(var(--measure) + 2 * var(--gutter)); margin-inline: auto; }
+/* 故事页的标题、图片、正文、链接、证据都在同一栏，左右边缘对齐 */
+.story { --story-width: 760px; }
+.story-head { max-width: calc(var(--story-width) + 2 * var(--gutter)); margin-inline: auto; }
 .story-title { font-size: clamp(1.9rem, 1.4rem + 2.4vw, 3rem); }
 .story-standfirst { font-size: 1.25rem; line-height: 1.45; color: var(--muted); }
 .story-meta { font-size: 0.92rem; color: var(--muted); }
-.story-body, .story-foot { max-width: calc(var(--measure) + 2 * var(--gutter)); margin-inline: auto; }
-.wrap-wide { max-width: calc(980px + 2 * var(--gutter)); }
+.story-body, .story-foot, .story-media { max-width: calc(var(--story-width) + 2 * var(--gutter)); margin-inline: auto; }
+.story-body.prose { max-width: calc(var(--story-width) + 2 * var(--gutter)); }
+.story-links { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 10px; }
+.story-links a { font-weight: 600; }
 .figure { margin: 32px 0; }
 .figure-btn { display: block; width: 100%; padding: 0; border: 0; background: var(--surface); cursor: zoom-in; border-radius: var(--radius); overflow: hidden; }
 .figure-img { width: 100%; }
 .figure figcaption { font-size: 0.88rem; color: var(--muted); margin-block-start: 8px; }
-.gallery { display: grid; gap: 0 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.gallery { display: grid; gap: 0 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
 .media-link { margin-block: 16px; }
 .story-foot .quotes { margin-block: 40px; }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-block-start: 48px; padding-block-start: 24px; border-block-start: var(--border); }

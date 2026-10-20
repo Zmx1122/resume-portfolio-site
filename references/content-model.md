@@ -82,7 +82,21 @@ ui: {
 ### 翻译规则
 
 - **先用材料的原始语言把事实写准，再翻译。** 例如 Arbeitszeugnis 是德语的，就先写德语版。
-- **专有名词不翻译**：公司、学校、产品、项目名保持原样。学校有官方英文名的，英文版可以用官方英文名。
+- **名称：哪些要按语言换成正式写法，哪些保持原文**。这一条最容易出错，写完逐项对照：
+
+  | 类型 | 怎么写 | 例子 |
+  |---|---|---|
+  | **学校、研究机构** | **每种语言用正式名称**，写成多语言对象。官网上通常能找到德语和英语名称；中文用通行译名 | `{ de: "Technische Universität München", en: "Technical University of Munich", zh: "慕尼黑工业大学" }`；`{ de: "Universität Stuttgart", en: "University of Stuttgart", zh: "斯图加特大学" }`；中国大学的英文正式名称德语页面也可以用，中文写中文校名：`{ de: "Tsinghua University", en: "Tsinghua University", zh: "清华大学" }` |
+  | **城市、地区、国家** | 每种语言用当地的写法，写成多语言对象 | `{ de: "München", en: "Munich", zh: "慕尼黑" }`；`{ de: "Köln", en: "Cologne", zh: "科隆" }` |
+  | 教席、院系、部门 | 有正式译名的用正式译名，没有的按意思翻译 | `{ de: "Lehrstuhl für Fördertechnik", en: "Chair of Materials Handling", zh: "物料搬运教席" }` |
+  | 公司名、产品名、品牌 | **保持原文**，所有语言都一样，写普通字符串即可 | `"Muster GmbH"`、`"Amazon Web Services"`、`"Power BI"` |
+  | 期刊、会议、论文题目 | 保持原文；中文页面可以在后面加中文说明 | `"IEEE CASE 2024"`、`"Journal of Manufacturing Systems"` |
+  | 课程名 | 用成绩单上的正式名称；网站其他语言可以翻译，必要时括号附原名 | `{ de: "Maschinelles Lernen", en: "Machine Learning", zh: "机器学习" }` |
+  | 职位 | 以正式职位为准（见下一条）；英文职位在德国招聘里很常见，德语页面也可以用英文职位 | `"Data Engineer"` |
+
+  检查脚本会提醒写成普通字符串的学校名和城市名，以及看起来没有翻译的内容（中文里没有汉字、德语和英语一字不差）。提醒里属于上表"保持原文"的，可以忽略。
+- **每种语言单独通读一遍**。写完后，按语言分别把所有内容读一遍，找出混进来的其他语言：英语句子里的德语引号 „…“、英语里的德语成绩词（"gut"）、中文里没翻译的德语词（"Übung" 要写成"习题课（Übung）"）、中文里的英文半角标点。引号和标点用这种语言的写法：德语 „…“，英语 "…"，中文 “…” 和全角标点。
+- **`content.js` 的字符串用英文双引号包着，里面不要再出现英文双引号 `"`**，否则整个网站会变成空白页。中文引号用 “”，德语用 „“。
 - **职位名称以正式职位为准**：德语版用证明上的德语职位；英语版用公司官方的英文职位，没有的话保留德语原文，不要自己"升级"成更高级的头衔。
 - **引用保留原文**：推荐信、工作证明里的引用，原文语言版本照录，其他语言版本放译文。
 - **德语的语气**：对读者用 Sie（"Schreiben Sie mir gern"）；经历要点可以用简洁的名词句或完整句，全站保持一致。
@@ -249,7 +263,7 @@ ui: {
 首页右侧的 S 形路线，每一站一个红色图钉，按经历先后排列，至少两站：
 
 ```js
-{ name: "TU Darmstadt", place: { de: "Darmstadt", en: "Darmstadt", zh: "德国 · 达姆施塔特" }, years: "2020–2022", label: { de: "Master", en: "Master's", zh: "硕士" } }
+{ name: "Uni Stuttgart", place: { de: "Stuttgart", en: "Stuttgart", zh: "德国 · 斯图加特" }, years: "2020–2022", label: { de: "Master", en: "Master's", zh: "硕士" } }
 ```
 
 `name` 不翻译（学校、公司名），`place` 和 `label` 要翻译。4–5 站效果最好。

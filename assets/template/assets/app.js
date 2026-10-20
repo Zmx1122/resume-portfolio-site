@@ -102,7 +102,7 @@
   });
   function get(section, id) { return id ? INDEX[section][id] : null; }
   function parentOf(id) { return get("work", id) || get("education", id) || get("projects", id); }
-  function orgName(p) { return p ? (p.name != null ? T(p.name) : p.institution || "") : ""; }
+  function orgName(p) { return p ? (p.name != null ? T(p.name) : T(p.institution) || "") : ""; }
 
   var stories = list("stories");
   var featured = stories.filter(function (s) { return s.featured; });
@@ -244,7 +244,7 @@
     return html`<footer class="site-footer">
       <div class="wrap footer-inner">
         <span>© ${new Date().getFullYear()} ${b.name || ""}</span>
-        ${META.updated ? html`<span>${U("updated")}: ${fmtDate(META.updated)}</span>` : ""}
+        ${META.updated ? html`<span>${U("updated")}${U("colon")}${fmtDate(META.updated)}</span>` : ""}
       </div>
     </footer>`;
   }
@@ -255,7 +255,7 @@
     var b = SITE.basics || {};
     var a = b.availability;
     var facts = [];
-    if (b.location && b.location.city) facts.push({ k: U("location"), v: b.location.city });
+    if (b.location && T(b.location.city)) facts.push({ k: U("location"), v: T(b.location.city) });
     if (a) {
       var av = [typeLabel(a.type), a.from ? U("available_from", { date: fmtDate(a.from) }) : "", T(a.hours)].filter(Boolean).join(" · ");
       if (av) facts.push({ k: U("available"), v: av });
@@ -385,8 +385,8 @@
       return html`<li class="tl-item tl-work">
         <p class="tl-date">${period(it.startDate, it.endDate)}</p>
         <div class="tl-body">
-          <h3 class="tl-title">${T(it.position)} <span class="tl-org">· ${it.url ? html`<a href="${safeUrl(it.url)}" target="_blank" rel="noopener">${it.name}</a>` : it.name}</span></h3>
-          <p class="tl-meta">${[typeLabel(it.type), it.location].filter(Boolean).join(" · ")}</p>
+          <h3 class="tl-title">${T(it.position)} <span class="tl-org">· ${it.url ? html`<a href="${safeUrl(it.url)}" target="_blank" rel="noopener">${T(it.name)}</a>` : T(it.name)}</span></h3>
+          <p class="tl-meta">${[typeLabel(it.type), T(it.location)].filter(Boolean).join(" · ")}</p>
           ${it.summary ? html`<p>${T(it.summary)}</p>` : ""}
           ${(it.highlights || []).length ? html`<ul class="tl-highlights">${it.highlights.map(function (h) { return html`<li>${T(h)}</li>`; })}</ul>` : ""}
           ${storyLinks(it.stories)}
@@ -398,11 +398,11 @@
       return html`<li class="tl-item tl-education">
         <p class="tl-date">${period(it.startDate, it.endDate, it.expectedEnd)}</p>
         <div class="tl-body">
-          <h3 class="tl-title">${[T(it.studyType), T(it.area)].filter(Boolean).join(", ")} <span class="tl-org">· ${it.url ? html`<a href="${safeUrl(it.url)}" target="_blank" rel="noopener">${it.institution}</a>` : it.institution}</span></h3>
-          ${score ? html`<p class="tl-meta">${U("grade")}: ${score}</p>` : ""}
-          ${(it.honors || []).length ? html`<p><span class="label">${U("honors")}:</span> ${it.honors.map(T).join(" · ")}</p>` : ""}
-          ${it.thesis ? html`<p><span class="label">${U("thesis")}:</span> ${it.thesis.story && get("stories", it.thesis.story) ? html`<a href="${href("story", it.thesis.story)}">${T(it.thesis.title)}</a>` : T(it.thesis.title)}${it.thesis.grade ? " (" + it.thesis.grade + ")" : ""}</p>` : ""}
-          ${(it.courses || []).length ? html`<p><span class="label">${U("courses")}:</span> ${it.courses.map(function (c) { return T(c.name) + (c.grade ? " (" + c.grade + ")" : ""); }).join(" · ")}</p>` : ""}
+          <h3 class="tl-title">${[T(it.studyType), T(it.area)].filter(Boolean).join(", ")} <span class="tl-org">· ${it.url ? html`<a href="${safeUrl(it.url)}" target="_blank" rel="noopener">${T(it.institution)}</a>` : T(it.institution)}</span></h3>
+          ${score ? html`<p class="tl-meta">${U("grade")}${U("colon")}${score}</p>` : ""}
+          ${(it.honors || []).length ? html`<p><span class="label">${U("honors")}${U("colon")}</span> ${it.honors.map(T).join(" · ")}</p>` : ""}
+          ${it.thesis ? html`<p><span class="label">${U("thesis")}${U("colon")}</span> ${it.thesis.story && get("stories", it.thesis.story) ? html`<a href="${href("story", it.thesis.story)}">${T(it.thesis.title)}</a>` : T(it.thesis.title)}${it.thesis.grade ? " (" + it.thesis.grade + ")" : ""}</p>` : ""}
+          ${(it.courses || []).length ? html`<p><span class="label">${U("courses")}${U("colon")}</span> ${it.courses.map(function (c) { return T(c.name) + (c.grade ? " (" + c.grade + ")" : ""); }).join(" · ")}</p>` : ""}
           ${storyLinks((it.stories || []).filter(function (id) { return !(it.thesis && it.thesis.story === id); }))}
         </div>
       </li>`;
@@ -420,7 +420,7 @@
     return html`<li class="tl-item tl-award">
       <p class="tl-date">${fmtDate(it.date)}</p>
       <div class="tl-body">
-        <h3 class="tl-title">${T(it.title)}${it.awarder ? html` <span class="tl-org">· ${it.awarder}</span>` : ""}</h3>
+        <h3 class="tl-title">${T(it.title)}${T(it.awarder) ? html` <span class="tl-org">· ${T(it.awarder)}</span>` : ""}</h3>
         ${it.summary ? html`<p>${T(it.summary)}</p>` : ""}
         ${it.story ? storyLinks([it.story]) : ""}
       </div>
@@ -531,15 +531,15 @@
           ${langs.length ? html`<div class="doc-block"><h3 class="subhead">${U("languages")}</h3>
             <ul class="plain-list">${langs.map(function (l) {
               var c = get("certificates", l.certificate);
-              return html`<li><strong>${T(l.language)}</strong> — ${l.cefr === "native" ? U("native") : l.cefr || ""}${c ? html` <span class="muted">(${c.name}${c.level ? " " + c.level : ""})</span>` : ""}${l.use ? html`<br><span class="muted">${T(l.use)}</span>` : ""}</li>`;
+              return html`<li><strong>${T(l.language)}</strong> — ${l.cefr === "native" ? U("native") : l.cefr || ""}${c ? html` <span class="muted">(${T(c.name)}${c.level ? " " + c.level : ""})</span>` : ""}${l.use ? html`<br><span class="muted">${T(l.use)}</span>` : ""}</li>`;
             })}</ul></div>` : ""}
           ${certs.length ? html`<div class="doc-block"><h3 class="subhead">${U("certificates")}</h3>
             <ul class="plain-list">${certs.map(function (c) {
-              return html`<li><strong>${c.name}</strong>${c.level ? " · " + c.level : ""}<br><span class="muted">${[c.issuer, fmtDate(c.date)].filter(Boolean).join(" · ")}</span>${c.verifyUrl ? html` <a class="small-link" href="${safeUrl(c.verifyUrl)}" target="_blank" rel="noopener">${U("verify")} ↗</a>` : ""}</li>`;
+              return html`<li><strong>${T(c.name)}</strong>${c.level ? " · " + c.level : ""}<br><span class="muted">${[T(c.issuer), fmtDate(c.date)].filter(Boolean).join(" · ")}</span>${c.verifyUrl ? html` <a class="small-link" href="${safeUrl(c.verifyUrl)}" target="_blank" rel="noopener">${U("verify")} ↗</a>` : ""}</li>`;
             })}</ul></div>` : ""}
           ${awards.length ? html`<div class="doc-block"><h3 class="subhead">${U("awards")}</h3>
             <ul class="plain-list">${awards.map(function (a) {
-              return html`<li><strong>${T(a.title)}</strong><br><span class="muted">${[a.awarder, fmtDate(a.date)].filter(Boolean).join(" · ")}</span>${a.summary ? html`<br>${T(a.summary)}` : ""}${a.story && get("stories", a.story) ? html` <a class="small-link" href="${href("story", a.story)}">${U("view_story")} →</a>` : ""}</li>`;
+              return html`<li><strong>${T(a.title)}</strong><br><span class="muted">${[T(a.awarder), fmtDate(a.date)].filter(Boolean).join(" · ")}</span>${a.summary ? html`<br>${T(a.summary)}` : ""}${a.story && get("stories", a.story) ? html` <a class="small-link" href="${href("story", a.story)}">${U("view_story")} →</a>` : ""}</li>`;
             })}</ul></div>` : ""}
         </div>
         ${visibleDocs.length ? html`<h3 class="subhead">${U("files")}</h3><ul class="doc-grid">${visibleDocs.map(docCard)}</ul>` : ""}
@@ -550,7 +550,7 @@
   function quoteBlock(q) {
     return html`<figure class="quote">
       <blockquote lang="${q.original && T(q.text) === (q.text && q.text[q.original]) ? q.original : L}"><p>${T(q.text)}</p></blockquote>
-      <figcaption>— ${q.author}${q.authorTitle ? html`, <span class="muted">${T(q.authorTitle)}</span>` : ""}</figcaption>
+      <figcaption>— ${T(q.author)}${q.authorTitle ? html`, <span class="muted">${T(q.authorTitle)}</span>` : ""}</figcaption>
     </figure>`;
   }
 
@@ -566,7 +566,7 @@
       <div class="wrap">
         ${raw("<" + H + ' class="section-title" id="about-title">' + esc(U("about")) + "</" + H + ">")}
         <div class="prose">${paragraphs(a.text)}</div>
-        ${(a.interests || []).length ? html`<p class="interests"><span class="label">${U("interests")}:</span> ${a.interests.map(T).join(" · ")}</p>` : ""}
+        ${(a.interests || []).length ? html`<p class="interests"><span class="label">${U("interests")}${U("colon")}</span> ${a.interests.map(T).join(" · ")}</p>` : ""}
         ${visibleQuotes.length ? html`<h3 class="subhead">${U("testimonials")}</h3><div class="quotes">${visibleQuotes.map(quoteBlock)}</div>` : ""}
       </div>
     </section>`;
@@ -651,7 +651,9 @@
     var media = s.media || [];
     var heroIdx = -1;
     media.some(function (m, i) { if ((m.type || "image") === "image") { heroIdx = i; return true; } return false; });
-    var others = media.filter(function (m, i) { return i !== heroIdx; });
+    // 图片和视频放进图集；链接单独列在正文栏里，和文字对齐
+    var others = media.filter(function (m, i) { return i !== heroIdx && (m.type || "image") !== "link"; });
+    var links = media.filter(function (m) { return m.type === "link" && safeUrl(m.src); });
     var group = "story-" + s.id;
     var evidence = (s.evidence || []).map(function (d) { return get("documents", d); }).filter(function (d) { return d && d.visibility !== "private"; });
     var quotes = (s.quotes || []).map(function (q) { return get("quotes", q); }).filter(function (q) { return q && visibleQuotes.indexOf(q) >= 0; });
@@ -669,13 +671,17 @@
         <p class="story-meta">${[T(s.role), storyPeriod(s.period), p ? orgName(p) : ""].filter(Boolean).join(" · ")}</p>
         ${metricsList(s.metrics, 3)}
       </div>
-      ${heroIdx >= 0 ? html`<div class="wrap wrap-wide">${mediaFigure(media[heroIdx], group, true)}</div>` : ""}
+      ${heroIdx >= 0 ? html`<div class="wrap story-media">${mediaFigure(media[heroIdx], group, true)}</div>` : ""}
       <div class="wrap story-body prose">
         ${s.problem ? html`<h2>${U("problem")}</h2>${paragraphs(s.problem)}` : ""}
         ${(s.actions || []).length ? html`<h2>${U("actions")}</h2><ul>${s.actions.map(function (a) { return html`<li>${T(a)}</li>`; })}</ul>` : ""}
         ${s.outcome ? html`<h2>${U("outcome")}</h2>${paragraphs(s.outcome)}` : ""}
+        ${links.length ? html`<ul class="story-links">${links.map(function (m) {
+          var cap = T(m.caption);
+          return html`<li><a href="${safeUrl(m.src)}" target="_blank" rel="noopener">${T(m.alt) || cap || m.src} <span aria-hidden="true">↗</span></a>${cap && T(m.alt) ? html`<br><span class="muted">${cap}</span>` : ""}</li>`;
+        })}</ul>` : ""}
       </div>
-      ${others.length ? html`<div class="wrap wrap-wide gallery">${others.map(function (m) { return mediaFigure(m, group, false); })}</div>` : ""}
+      ${others.length ? html`<div class="wrap story-media gallery">${others.map(function (m) { return mediaFigure(m, group, false); })}</div>` : ""}
       <div class="wrap story-foot">
         ${quotes.length ? html`<div class="quotes">${quotes.map(quoteBlock)}</div>` : ""}
         ${papers.length ? html`<div class="story-papers"><h2 class="subhead">${U("publications")}</h2><ul class="paper-list">${papers.map(function (p) {
@@ -706,7 +712,7 @@
         <h1 class="section-title">${U("stories_with_skill", { name: T(s.name) })}</h1>
         ${uses.stories.length ? html`<div class="cards cards-featured">${uses.stories.map(function (x) { return storyCard(x); })}</div>` : ""}
         ${uses.entries.length ? html`<h2 class="subhead">${U("used_in")}</h2><ul class="plain-list">${uses.entries.map(function (w) {
-          return html`<li><strong>${w.position ? T(w.position) : T(w.name)}</strong>${w.position ? html` · ${w.name}` : ""} <span class="muted">${period(w.startDate, w.endDate)}</span></li>`;
+          return html`<li><strong>${w.position ? T(w.position) : T(w.name)}</strong>${w.position ? html` · ${T(w.name)}` : ""} <span class="muted">${period(w.startDate, w.endDate)}</span></li>`;
         })}</ul>` : ""}
       </div>
     </section>`;
@@ -717,7 +723,7 @@
     var cvFile = b.cv ? safeUrl(b.cv[L] || b.cv[DEFAULT_LANG] || b.cv[Object.keys(b.cv)[0]]) : "";
     var email = b.email && b.email.show !== false ? b.email.value : "";
     var phone = b.phone && b.phone.show !== false ? b.phone.value : "";
-    var contact = [b.location && b.location.city, email, phone].concat((b.profiles || []).map(function (p) { return p.url ? p.url.replace(/^https?:\/\/(www\.)?/, "") : ""; })).filter(Boolean);
+    var contact = [b.location && T(b.location.city), email, phone].concat((b.profiles || []).map(function (p) { return p.url ? p.url.replace(/^https?:\/\/(www\.)?/, "") : ""; })).filter(Boolean);
     var groups = {};
     list("skills").forEach(function (s) { (groups[s.category || "other"] = groups[s.category || "other"] || []).push(T(s.name)); });
     return html`<section class="cv">
@@ -736,12 +742,12 @@
           ${b.headline ? html`<p class="cv-headline">${T(b.headline)}</p>` : ""}
         </header>
         ${list("work").length ? html`<h2>${U("work")}</h2>${list("work").map(function (w) {
-          return html`<div class="cv-entry"><p class="cv-when">${period(w.startDate, w.endDate)}</p><div><p><strong>${T(w.position)}</strong> · ${w.name}${w.location ? ", " + w.location : ""}</p>
+          return html`<div class="cv-entry"><p class="cv-when">${period(w.startDate, w.endDate)}</p><div><p><strong>${T(w.position)}</strong> · ${T(w.name)}${T(w.location) ? ", " + T(w.location) : ""}</p>
             ${(w.highlights || []).length ? html`<ul>${w.highlights.map(function (h) { return html`<li>${T(h)}</li>`; })}</ul>` : ""}</div></div>`;
         })}` : ""}
         ${list("education").length ? html`<h2>${U("education")}</h2>${list("education").map(function (e) {
-          return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${e.institution}${e.score && e.score.show !== false ? " · " + U("grade") + " " + e.score.value : ""}</p>
-            ${e.thesis ? html`<p class="muted">${U("thesis")}: ${T(e.thesis.title)}</p>` : ""}</div></div>`;
+          return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${T(e.institution)}${e.score && e.score.show !== false ? " · " + U("grade") + " " + e.score.value : ""}</p>
+            ${e.thesis ? html`<p class="muted">${U("thesis")}${U("colon")}${T(e.thesis.title)}</p>` : ""}</div></div>`;
         })}` : ""}
         ${Object.keys(groups).length ? html`<h2>${U("skills")}</h2><dl class="cv-dl">${Object.keys(groups).map(function (cat) {
           var label = U("cat_" + cat);
@@ -749,7 +755,7 @@
         })}</dl>` : ""}
         ${list("publications").length ? html`<h2>${U("publications")}</h2><ul>${list("publications").map(function (p) { return html`<li>${T(p.name)}${p.publisher ? ", " + T(p.publisher) : ""} ${fmtDate(p.releaseDate)}</li>`; })}</ul>` : ""}
         ${list("languages").length ? html`<h2>${U("languages")}</h2><p>${list("languages").map(function (l) { return T(l.language) + " " + (l.cefr === "native" ? "(" + U("native") + ")" : l.cefr ? "(" + l.cefr + ")" : ""); }).join(" · ")}</p>` : ""}
-        ${list("certificates").length + list("awards").length ? html`<h2>${U("certificates")} / ${U("awards")}</h2><ul>${list("certificates").map(function (c) { return html`<li>${c.name}${c.level ? " " + c.level : ""}, ${c.issuer || ""} ${fmtDate(c.date)}</li>`; })}${list("awards").map(function (a) { return html`<li>${T(a.title)}, ${a.awarder || ""} ${fmtDate(a.date)}</li>`; })}</ul>` : ""}
+        ${list("certificates").length + list("awards").length ? html`<h2>${U("certificates")} / ${U("awards")}</h2><ul>${list("certificates").map(function (c) { return html`<li>${T(c.name)}${c.level ? " " + c.level : ""}, ${T(c.issuer) || ""} ${fmtDate(c.date)}</li>`; })}${list("awards").map(function (a) { return html`<li>${T(a.title)}, ${T(a.awarder) || ""} ${fmtDate(a.date)}</li>`; })}</ul>` : ""}
       </div>
     </section>`;
   }

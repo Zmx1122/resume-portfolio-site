@@ -91,6 +91,54 @@ if (langs.length > 1) {
   }
 }
 
+// ---------- 译文是不是真的翻译了 ----------
+
+// 1. 学校、城市、颁发机构这类名称，各语言通常有不同的正式写法，不应该只写一种
+const PLACE_FIELDS = [
+  ["education", "institution", '学校名称各语言通常有正式写法，例如 { de: "Technische Universität München", en: "Technical University of Munich", zh: "慕尼黑工业大学" }'],
+  ["work", "location", '城市名各语言写法不同，例如 { de: "München", en: "Munich", zh: "慕尼黑" }'],
+  ["awards", "awarder", "颁发机构有其他语言的正式名称时，写成多语言对象"],
+  ["certificates", "issuer", "颁发机构有其他语言的正式名称时，写成多语言对象"],
+];
+if (langs.length > 1) {
+  for (const [sec, field, hint] of PLACE_FIELDS) {
+    for (const x of S[sec] || []) {
+      const v = x && x[field];
+      if (typeof v === "string" && v.trim()) warn(`${sec}.${x.id || "?"}.${field}："${v}" 只有一种写法，所有语言都会显示它。${hint}`);
+    }
+  }
+  const city = S.basics && S.basics.location && S.basics.location.city;
+  if (typeof city === "string" && city.trim()) warn(`basics.location.city："${city}" 只有一种写法。城市名各语言写法不同，例如 { de: "München", en: "Munich", zh: "慕尼黑" }`);
+}
+
+// 2. 内容看起来没有翻译：中文里没有汉字；德语和英语一字不差
+const CJK = /[㐀-鿿぀-ヿ가-힯]/;
+const SKIP_SAME = /^(skills|publications\.\d+\.name|stories\.[^.]+\.metrics|ui)/;
+function checkLang(node, p) {
+  if (Array.isArray(node)) return node.forEach((v, i) => checkLang(v, `${p}[${i}]`));
+  if (!node || typeof node !== "object") return;
+  if (isLangObj(node) && p !== "basics.cv" && !p.startsWith("ui")) {
+    for (const l of langs.filter((l) => /^(zh|ja|ko)/.test(l))) {
+      const v = node[l];
+      if (typeof v === "string" && v.replace(/[\s\d.,:;·()\/–+%|-]/g, "").length > 12 && !CJK.test(v) && !p.startsWith("skills")) {
+        warn(`${p}.${l}：中文译文里没有汉字，可能还没翻译："${v.slice(0, 60)}"`);
+      }
+    }
+    if (node.de && node.en && node.de === node.en && node.de.length > 24 && /\s/.test(node.de) && !SKIP_SAME.test(p)) {
+      warn(`${p}：德语和英语完全一样，可能有一种没翻译："${node.de.slice(0, 60)}"`);
+    }
+    return;
+  }
+  for (const k of Object.keys(node)) checkLang(node[k], p ? `${p}.${k}` : k);
+}
+if (langs.length > 1) {
+  for (const sec of Object.keys(S)) {
+    const val = S[sec];
+    if (Array.isArray(val)) val.forEach((x, i) => checkLang(x, `${sec}.${(x && x.id) || i}`));
+    else checkLang(val, sec);
+  }
+}
+
 // ---------- id 引用 ----------
 
 const ids = {};
