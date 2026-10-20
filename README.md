@@ -6,6 +6,8 @@
 
 > 作者：zmx1122 · 配套教程见小红书同名账号 @笨比本比
 
+**在线演示**：[https://zmx1122.github.io/resume-portfolio-demo/](https://zmx1122.github.io/resume-portfolio-demo/)（虚构人物"陈梅"，由这个 skill 在测试中生成）
+
 - **第一部分：[零基础使用指南](#第一部分零基础使用指南)**：不懂技术？只看这一部分就够了
 - **第二部分：[技术说明](#第二部分技术说明)**：想安装成 skill、修改模板、参与开发，看这一部分
 - [English summary](#english-summary)
@@ -22,6 +24,15 @@
 | 2 | **一个 AI 工具**。见下面"用哪个 AI"。 |
 | 3 | **一个邮箱**。最后发布网站时，用它注册一个免费账号。 |
 | 4 | **大约 1 小时**。 |
+
+### 先看看做出来是什么样
+
+打开[在线演示](https://zmx1122.github.io/resume-portfolio-demo/)，这是用虚构人物"陈梅"的材料做出来的网站。同一份内容换成其他风格：
+[报纸编辑风](https://zmx1122.github.io/resume-portfolio-demo/?style=editorial) ·
+[Bento 卡片](https://zmx1122.github.io/resume-portfolio-demo/?style=bento) ·
+[暗色科技](https://zmx1122.github.io/resume-portfolio-demo/?style=terminal-dark) ·
+[温暖作品集](https://zmx1122.github.io/resume-portfolio-demo/?style=warm-portfolio) ·
+[学术简约](https://zmx1122.github.io/resume-portfolio-demo/?style=academic)（默认是瑞士极简）
 
 ### 用哪个 AI
 
