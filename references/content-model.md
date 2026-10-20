@@ -158,6 +158,7 @@ ui: {
 | `area` | 译。专业 |
 | `startDate`、`endDate` | 还在读的不写 `endDate`，写 `expectedEnd` |
 | `score` | `{ value: "1.7", scale: "DE" }`。只有用户同意公开成绩时才写 |
+| `focus` | `[译]`，3–5 个专业方向关键词（Schwerpunkte），从成绩单的模块分组和课程归纳出来，用岗位里会出现的词；网站和一页简历都会显示 |
 | `courses` | `[{ name: 译, grade, ects }]`，4–8 门相关课程 |
 | `thesis` | `{ title: 译, grade, story: "故事 id" }` |
 | `stories`、`evidence`、`sources` | |

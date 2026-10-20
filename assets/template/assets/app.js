@@ -402,6 +402,7 @@
           ${score ? html`<p class="tl-meta">${U("grade")}${U("colon")}${score}</p>` : ""}
           ${(it.honors || []).length ? html`<p><span class="label">${U("honors")}${U("colon")}</span> ${it.honors.map(T).join(" · ")}</p>` : ""}
           ${it.thesis ? html`<p><span class="label">${U("thesis")}${U("colon")}</span> ${it.thesis.story && get("stories", it.thesis.story) ? html`<a href="${href("story", it.thesis.story)}">${T(it.thesis.title)}</a>` : T(it.thesis.title)}${it.thesis.grade ? " (" + it.thesis.grade + ")" : ""}</p>` : ""}
+          ${(it.focus || []).length ? html`<p><span class="label">${U("focus")}${U("colon")}</span> ${it.focus.map(T).join(" · ")}</p>` : ""}
           ${(it.courses || []).length ? html`<p><span class="label">${U("courses")}${U("colon")}</span> ${it.courses.map(function (c) { return T(c.name) + (c.grade ? " (" + c.grade + ")" : ""); }).join(" · ")}</p>` : ""}
           ${storyLinks((it.stories || []).filter(function (id) { return !(it.thesis && it.thesis.story === id); }))}
         </div>
@@ -750,6 +751,7 @@
         })}` : ""}
         ${list("education").length ? html`<h2>${U("education")}</h2>${list("education").map(function (e) {
           return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${T(e.institution)}${e.score && e.score.show !== false ? " · " + U("grade") + " " + e.score.value : ""}</p>
+            ${(e.focus || []).length ? html`<p class="muted">${U("focus")}${U("colon")}${e.focus.map(T).join(" · ")}</p>` : ""}
             ${e.thesis ? html`<p class="muted">${U("thesis")}${U("colon")}${T(e.thesis.title)}</p>` : ""}</div></div>`;
         })}` : ""}
         ${Object.keys(groups).length ? html`<h2>${U("skills")}</h2><dl class="cv-dl">${Object.keys(groups).map(function (cat) {
