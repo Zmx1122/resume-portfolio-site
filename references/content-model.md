@@ -118,7 +118,7 @@ ui: {
 | `layout` | `"compact"`（紧凑型单页）或 `"editorial"`（编辑型多页）；不写时按故事数量自动选，见 `information-architecture.md` 第 3 节 |
 | `sections` | 紧凑型首页的版块顺序，可选的值：`"stories"`、`"experience"`、`"education"`（写了它，教育会从经历里单独拿出来成为一个版块）、`"publications"`、`"skills"`、`"documents"`、`"about"`。不写时用 `["stories", "experience", "publications", "skills", "documents", "about"]`；没有内容的版块自动不显示 |
 | `updated` | 内容更新日期 |
-| `cv` | 可选。控制"速览"页（一页纸简历）显示多少内容，网站其他页面不变，用来把速览页压到一页：`{ highlights: 3, publications: 3, awards: 3, certificates: 3, skillCategories: ["ai", "engineering"] }`。每项都可以不写；`highlights` 是每段经历最多几条要点，论文和奖项按日期取最新的几项 |
+| `cv` | 可选。控制"速览"页（一页纸简历）显示多少内容，网站其他页面不变：`{ fit: 4, highlights: 3, publications: 3, awards: 3, certificates: 3, skillCategories: ["ai", "engineering"] }`。每项都可以不写。`fit` 是压缩级别（0–7），由 `screenshot.js --cv` 自动算出来，写上后网页"打印"按钮的效果和 PDF 一致；其余是手动限制：`highlights` 是每段经历最多几条要点，论文和奖项按日期取最新的几项 |
 
 ### basics：基本信息
 

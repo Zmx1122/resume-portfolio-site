@@ -916,20 +916,40 @@
     var email = b.email && b.email.show !== false ? b.email.value : "";
     var phone = b.phone && b.phone.show !== false ? b.phone.value : "";
     var contact = [b.location && T(b.location.city), email, phone].concat((b.profiles || []).map(function (p) { return p.url ? p.url.replace(/^https?:\/\/(www\.)?/, "") : ""; })).filter(Boolean);
-    // meta.cv 控制速览页显示多少内容（网站其他页面不受影响），用来把速览页压到一页
-    var CVC = META.cv || {};
+    // 速览页压到一页：meta.cv 手动限制显示多少内容；"压缩级别"（网址 ?cvfit=N，或 meta.cv.fit）在此基础上逐级收紧。
+    // screenshot.js --cv 会从 0 级开始逐级试，直到打印出来只有一页。网站其他页面不受影响
+    // 先缩小字号和页边距（不丢内容），再逐步少放内容
+    var FIT_LEVELS = [
+      {},
+      { dense: 1 },
+      { dense: 1, highlights: 3 },
+      { dense: 1, highlights: 3, publications: 3, awards: 3, certificates: 3 },
+      { dense: 2, highlights: 3, publications: 3, awards: 3, certificates: 3 },
+      { dense: 2, highlights: 2, publications: 3, awards: 3, certificates: 3, hideFocus: true },
+      { dense: 2, highlights: 1, publications: 2, awards: 2, certificates: 2, hideFocus: true },
+      { dense: 2, highlights: 1, publications: 2, awards: 2, certificates: 2, hideFocus: true, maxSkillCategories: 4 }
+    ];
+    var fitParam = parseInt(new URLSearchParams(location.search).get("cvfit"), 10);
+    var fit = Math.max(0, Math.min(FIT_LEVELS.length - 1, isNaN(fitParam) ? ((META.cv || {}).fit || 0) : fitParam));
+    var CVC = {};
+    [META.cv || {}, FIT_LEVELS[fit]].forEach(function (src) {
+      Object.keys(src).forEach(function (k) {
+        CVC[k] = typeof src[k] === "number" && typeof CVC[k] === "number" ? Math.min(CVC[k], src[k]) : src[k] != null ? src[k] : CVC[k];
+      });
+    });
     var cap = function (arr, n) { return typeof n === "number" ? arr.slice(0, n) : arr; };
     var groups = {};
     list("skills").forEach(function (s) {
       var cat = s.category || "other";
       if (CVC.skillCategories && CVC.skillCategories.indexOf(cat) < 0) return;
+      if (!groups[cat] && CVC.maxSkillCategories && Object.keys(groups).length >= CVC.maxSkillCategories) return;
       (groups[cat] = groups[cat] || []).push(T(s.name));
     });
     var cvPubs = cap(list("publications").slice().sort(function (a, b) { return (b.releaseDate || "").localeCompare(a.releaseDate || ""); }), CVC.publications);
     var cvAwards = cap(list("awards").slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); }), CVC.awards);
     var cvCerts = cap(list("certificates"), CVC.certificates);
     var certTitle = [cvCerts.length ? U("certificates") : "", cvAwards.length ? U("awards") : ""].filter(Boolean).join(" / ");
-    return html`<section class="cv">
+    return html`<section class="cv${CVC.dense ? " cv-dense" + (CVC.dense > 1 ? " cv-denser" : "") : ""}">
       <div class="wrap cv-sheet">
         <div class="cv-tools no-print">
           <a href="${href("home")}"><span aria-hidden="true" class="arrow arrow-back">←</span> ${U("back")}</a>
@@ -950,7 +970,7 @@
         })}` : ""}
         ${list("education").length ? html`<h2>${U("education")}</h2>${list("education").map(function (e) {
           return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${T(e.institution)}${e.score && e.score.show !== false ? " · " + U("grade") + " " + T(e.score.value) : ""}</p>
-            ${(e.focus || []).length ? html`<p class="muted">${U("focus")}${U("colon")}${e.focus.map(T).join(" · ")}</p>` : ""}
+            ${(e.focus || []).length && !CVC.hideFocus ? html`<p class="muted">${U("focus")}${U("colon")}${e.focus.map(T).join(" · ")}</p>` : ""}
             ${e.thesis ? html`<p class="muted">${U("thesis")}${U("colon")}${T(e.thesis.title)}</p>` : ""}</div></div>`;
         })}` : ""}
         ${Object.keys(groups).length ? html`<h2>${U("skills")}</h2><dl class="cv-dl">${Object.keys(groups).map(function (cat) {

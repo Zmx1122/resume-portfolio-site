@@ -56,7 +56,7 @@ description: 把用户已有的求职材料（多个版本的简历、求职信�
 | 技能分类起了自己的名字（"agents""lowcode"），页面和简历 PDF 上直接显示英文 id | 用内置分类（ai、automation、data、engineering、design、business、research、tools、other）；确实要新分类，在 `ui` 里给每种语言写名字 |
 | 用 `chrome --screenshot` 检查页面：图片是灰框，手机宽度也不对，于是以为页面没问题 | 用 `scripts/screenshot.js`，它会等图片加载完、用真实宽度截全页图 |
 | 本科只有毕业论文用过仿真，却把"仿真"挂在整个本科条目上，技能页显示"用了 4 年" | 只在某个故事里用过的技能，写进那个故事的 `skills`，不写进整段经历；年限只按故事自己的时间算 |
-| 速览页打印成 2–3 页，最后一页只剩几行 | 用 `meta.cv` 限制速览页上的要点、论文、奖项和技能类别（见 `components.md`），每改一次重新生成 PDF 看页数 |
+| 速览页打印成 2–3 页，最后一页只剩几行 | 用 `screenshot.js --cv` 生成：它会自动逐级压缩到一页（先缩字号，再少放内容），然后按提示把 `meta.cv.fit` 写进 `content.js`。需要自己决定删什么时，用 `meta.cv` 手动限制（见 `components.md`） |
 
 ## 先判断你能做什么
 

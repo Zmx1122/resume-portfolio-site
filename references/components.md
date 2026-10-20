@@ -117,15 +117,13 @@ node scripts/screenshot.js 我的简历网站/site --pages "de/,en/skills,zh/sto
 node scripts/screenshot.js 我的简历网站/site --cv
 ```
 
-它会给每种语言生成 `site/assets/docs/cv-<语言>.pdf`（没有页眉页脚），并报告每份有几页。脚本**不会改 `content.js`**：生成后你自己把这几个文件写进 `basics.cv`（例如 `cv: { de: "assets/docs/cv-de.pdf", en: "assets/docs/cv-en.pdf" }`），再运行检查脚本，它会读 PDF 里的文字，确认没有电话等信息。
+它会给每种语言生成 `site/assets/docs/cv-<语言>.pdf`（没有页眉页脚）。**超过一页时自动逐级压缩，直到只有一页**：先缩小字号和页边距（不丢内容），再每段经历只留 3 条要点、论文和奖项只留最新的 3 项，再继续收紧（一共 7 级）。脚本会报告每种语言用了第几级。脚本**不会改 `content.js`**：生成后你自己把这几个文件写进 `basics.cv`（例如 `cv: { de: "assets/docs/cv-de.pdf", en: "assets/docs/cv-en.pdf" }`），再运行检查脚本，它会读 PDF 里的文字，确认没有电话等信息。
 
-**速览页最好只有一页。** 超过一页时，用 `content.js` 的 `meta.cv` 限制速览页上显示的内容（网站其他页面不变），按这个顺序试，每改一次重新生成 PDF 看页数：
+生成后按脚本的提示在 `meta.cv` 里写上 `fit`（例如 `cv: { fit: 4 }`），网页上"打印"按钮打出来的效果才和 PDF 一样。
 
-1. `highlights: 3`：每段经历最多 3 条要点
-2. `skillCategories: [...]`：技能只留和目标岗位相关的类别
-3. `publications: 3`、`awards: 3`：论文和奖项只留最新的 3 项，其余在网站上看
+想自己决定删什么（而不是让脚本按顺序删），用 `meta.cv` 手动限制速览页上的内容（网站其他页面不变）：`highlights: 3`（每段经历最多几条要点）、`skillCategories: [...]`（只留和目标岗位相关的技能类别）、`publications: 3`、`awards: 3`。手动限制和自动压缩同时生效，取更严格的那个。
 
-两页也可以接受，但第一页必须是最重要的内容。
+压到最高一级还超过一页时，脚本会提醒；这时用上面的手动限制再删一些，或者把经历要点写短。
 
 ## 6. 不要做的事
 

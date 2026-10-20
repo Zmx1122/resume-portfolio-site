@@ -7,6 +7,7 @@
 // - 宽度是真实的页面宽度（chrome --window-size=390 实际排版宽度并不是 390）
 // --mobile    再按手机宽度 390 截一遍
 // --cv        把"速览"页按每种语言打印成 PDF，放进 <网站文件夹>/assets/docs/cv-<语言>.pdf（不带页眉页脚）。
+//             超过一页时自动逐级压缩（每段经历的要点更少、只留最新的论文和奖项、字小一点），直到只有一页。
 //             脚本不会改 content.js：生成后自己把 basics.cv 写好，再运行 check_content.js
 // --file      截网站文件夹里的另一个页面（比如风格小样 preview-2.html），默认是 index.html
 // 需要 Node.js 22 或更新版本（自带 WebSocket）和 Google Chrome / Chromium。
@@ -105,23 +106,25 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const settle = async () => {
     await send("Runtime.evaluate", { awaitPromise: true, expression: `(async () => {
       await new Promise((r) => setTimeout(r, 400));
-      const imgs = [...document.images];
+      // 只等有 src 的图片（放大窗口里那张空的 <img> 永远不会加载完）
+      const imgs = [...document.images].filter((i) => i.getAttribute("src"));
       imgs.forEach((i) => { i.loading = "eager"; });
-      const wait = (list) => Promise.race([Promise.all(list.map((i) => i.complete && i.naturalWidth ? 0 : new Promise((r) => { i.onload = i.onerror = r; }))), new Promise((r) => setTimeout(r, 8000))]);
+      const wait = (list) => Promise.race([Promise.all(list.map((i) => i.complete ? 0 : new Promise((r) => { i.onload = i.onerror = r; }))), new Promise((r) => setTimeout(r, 8000))]);
       await wait(imgs);
       // 偶尔有图片没加载出来：重新加载一次再等
-      const broken = imgs.filter((i) => !i.naturalWidth);
+      const broken = imgs.filter((i) => i.complete && !i.naturalWidth);
       broken.forEach((i) => { const s = i.src; i.src = ""; i.src = s; });
       if (broken.length) await wait(broken);
       await new Promise((r) => setTimeout(r, 300));
     })()` }, sessionId);
   };
   let navCount = 0;
-  const open = async (hash, size) => {
+  const fits = [];
+  const open = async (hash, size, query) => {
     await send("Emulation.setDeviceMetricsOverride", { width: size.width, height: size.mobile ? 844 : 900, deviceScaleFactor: 1, mobile: size.mobile }, sessionId);
     const loaded = waitEvent("Page.loadEventFired", sessionId);
     // 每次带一个不同的 ?n=，保证是一次完整的页面加载（只改 # 后面的部分不会触发加载完成事件）
-    await send("Page.navigate", { url: base + pageFile + "?n=" + (++navCount) + "#/" + hash.replace(/^#?\/?/, "") }, sessionId);
+    await send("Page.navigate", { url: base + pageFile + "?n=" + (++navCount) + (query ? "&" + query : "") + "#/" + hash.replace(/^#?\/?/, "") }, sessionId);
     await loaded;
     await settle();
   };
@@ -142,16 +145,25 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   if (args.includes("--cv")) {
     const docs = path.join(siteDir, "assets", "docs");
     fs.mkdirSync(docs, { recursive: true });
+    const MAX_FIT = 7; // 和 app.js 里 FIT_LEVELS 的级数一致
     for (const l of langs) {
-      await open(`${l}/cv`, sizes[0]);
-      await send("Emulation.setEmulatedMedia", { media: "print" }, sessionId);
-      const pdf = await send("Page.printToPDF", { printBackground: false, preferCSSPageSize: true, displayHeaderFooter: false }, sessionId);
-      await send("Emulation.setEmulatedMedia", { media: "" }, sessionId);
+      let buf, pagesCount, fit = 0;
+      for (; fit <= MAX_FIT; fit++) {
+        await open(`${l}/cv`, sizes[0], `cvfit=${fit}`);
+        await send("Emulation.setEmulatedMedia", { media: "print" }, sessionId);
+        const pdf = await send("Page.printToPDF", { printBackground: false, preferCSSPageSize: true, displayHeaderFooter: false }, sessionId);
+        await send("Emulation.setEmulatedMedia", { media: "" }, sessionId);
+        buf = Buffer.from(pdf.data, "base64");
+        pagesCount = (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+        if (pagesCount <= 1) break;
+      }
+      fit = Math.min(fit, MAX_FIT);
       const file = path.join(docs, `cv-${l}.pdf`);
-      fs.writeFileSync(file, Buffer.from(pdf.data, "base64"));
-      const pagesCount = (Buffer.from(pdf.data, "base64").toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
-      saved.push(`${file}（${pagesCount} 页${pagesCount > 1 ? "：速览页最好只有 1 页，见 components.md" : ""}）`);
+      fs.writeFileSync(file, buf);
+      saved.push(`${file}（${pagesCount} 页${fit ? `，压缩级别 ${fit}` : ""}${pagesCount > 1 ? "：压到最高级别还是超过一页，用 meta.cv 再删一些内容，见 components.md" : ""}）`);
+      fits.push(fit);
     }
+    if (fits.some((f) => f > 0)) saved.push(`想让网页上"打印"按钮的效果和 PDF 一样，在 content.js 的 meta 里写 cv: { fit: ${Math.max(...fits)} }`);
   }
   ws.close(); srv.close();
   await new Promise((r) => { chrome.once("exit", r); chrome.kill(); setTimeout(r, 5000); });
