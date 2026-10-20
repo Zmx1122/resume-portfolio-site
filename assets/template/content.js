@@ -45,6 +45,7 @@ window.SITE = {
   work: [
     {
       id: "muster",
+      short: "Muster GmbH",
       name: "Muster GmbH",
       url: "https://example.com",
       position: {
@@ -83,6 +84,7 @@ window.SITE = {
   education: [
     {
       id: "msc",
+      short: { de: "M.Sc. TH Beispielstadt", en: "M.Sc. TH Beispielstadt", zh: "示例市理工硕士" },
       institution: { de: "Technische Hochschule Beispielstadt", en: "Beispielstadt University of Technology", zh: "示例市理工大学" },
       url: "https://example.org",
       studyType: { de: "Master of Science", en: "Master of Science", zh: "理学硕士" },
@@ -229,7 +231,7 @@ window.SITE = {
   skills: [
     { id: "power-bi", name: "Power BI", category: "data" },
     { id: "sql", name: "SQL", category: "data" },
-    { id: "python", name: "Python", category: "data" },
+    { id: "python", name: "Python", category: "data", core: true, summary: { de: "Im Studium für die Masterarbeit, im Werkstudentenjob für automatisierte Berichte.", en: "Used for my master’s thesis and for automated reports in my working-student job.", zh: "硕士论文和 Werkstudent 工作里的自动化报表都用 Python。" } },
     { id: "forecasting", name: "Forecasting", category: "data" }
   ],
 

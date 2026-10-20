@@ -138,13 +138,14 @@ ui: {
 |---|---|
 | `id` | |
 | `name`、`url` | 公司名、官网 |
+| `short` | 可选，译或文字。技能矩阵的列名，名字长时一定要写，例如 `"Bliro"`、`{ de: "TUM", en: "TUM", zh: "慕尼黑工大" }` |
 | `position` | 译。正式职位 |
 | `type` | 写这些固定值之一，页面会自动翻译成每种语言：`"Vollzeit"`、`"Teilzeit"`、`"Werkstudent"`、`"Praktikum"`、`"HiWi"`、`"Abschlussarbeit"`、`"Freelance"`、`"Ehrenamt"`。需要特别的写法（比如德语用阴性 Werkstudentin）时，写成多语言对象 `{ de: "Werkstudentin", en: "Working student", zh: "Werkstudent" }` |
 | `location` | 城市，远程写 `"Remote"` |
 | `startDate`、`endDate` | |
 | `summary` | 译。一句话说明这段经历 |
 | `highlights` | 每一项译。2–4 条要点，用于时间线和概览；详细内容放进故事 |
-| `skills` | 技能 id 列表 |
+| `skills` | 技能 id 列表。**这段经历里用到的所有技能**，不只是故事里提到的；技能页的矩阵和使用年限都从这里算 |
 | `stories` | 属于这段经历的故事 id |
 | `evidence` | 证据文件 id，例如这家公司的工作证明 |
 | `sources` | |
@@ -154,6 +155,8 @@ ui: {
 | 字段 | 说明 |
 |---|---|
 | `id`、`institution`、`url` | |
+| `short` | 可选。技能矩阵的列名，例如 `{ de: "M.Sc. Darmstadt", en: "M.Sc. Darmstadt", zh: "达姆施塔特硕士" }` |
+| `skills` | 学习期间（课程、论文、学生项目）真正用到的技能 id。写了才会在技能矩阵里成为一列 |
 | `studyType` | 译。例如 "Master of Science" |
 | `area` | 译。专业 |
 | `startDate`、`endDate` | 还在读的不写 `endDate`，写 `expectedEnd` |
@@ -165,7 +168,7 @@ ui: {
 
 ### projects：项目（课程项目、个人项目、比赛）
 
-字段同 JSON Resume（`name` 译、`description` 译、`startDate`、`endDate`、`url`），另加 `stories`、`skills`、`evidence`、`sources`。
+字段同 JSON Resume（`name` 译、`description` 译、`startDate`、`endDate`、`url`），另加 `short`、`stories`、`skills`、`evidence`、`sources`。
 
 ### stories：故事（网站的核心）
 
@@ -202,7 +205,23 @@ ui: {
 
 工具和编程语言的名字（Python、Power BI）直接写；需要翻译的技能写成多语言对象。
 
-技能**不写等级**。页面会自动统计每项技能出现在哪些故事里，用故事来证明能力。没有挂在任何故事或经历上的技能，问用户在哪里用过；实在没有，就放在次要位置或不放。
+```js
+{ id: "python", name: "Python", category: "engineering", core: true,
+  summary: { de: "…", en: "Used at every station: thesis, research at TUM, production agents at Bliro.", zh: "…" } }
+```
+
+技能**不写等级**，也不画进度条。技能页由三部分组成，全部从数据自动算出来：
+
+1. **核心技能卡片**：`core: true` 的技能（挑 3–4 个，和求职方向最相关、用得最久的）。卡片显示"从哪年开始 · 用了多久"、使用年限条、用过的经历路径（例如 TU Darmstadt → TUM → Bliro，能链接到故事的会自动链接），和 `summary` 一句话。没有标 `core` 时，页面自动挑用在最多段经历里的 3 个，但没有 `summary`，效果差很多。
+2. **技能 × 经历矩阵**：每行一项技能，每列一段经历（`work`、`education`、`projects`，按时间排）。一段经历用到某项技能 = 条目自己的 `skills` 里有它，**或者**它下面的故事的 `skills` 里有它。圆点链接到用到这项技能的故事。
+3. **使用年限条**：把用到这项技能的经历时间段合并后计算，重叠的时间不重复算，按半年向下取整。
+
+所以：
+
+- **每段经历的 `skills` 要写全**。Python 在硕士、科研、工作里都用过，就三段经历都写，否则矩阵里只有一个点，看起来只用过一次。
+- 故事的 `skills` 只写这个故事里真正体现的技能。
+- 经历名字长（大学全称、公司全称）时写 `short`，否则矩阵的列会很宽。
+- 没有挂在任何经历或故事上的技能，矩阵里这一行是空的：问用户在哪里用过；实在没有，就不放。
 
 `category` 只用于分组显示，按用户的领域起名，例如 `"data"`、`"engineering"`、`"design"`、`"business"`、`"tools"`。
 

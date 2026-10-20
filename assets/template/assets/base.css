@@ -231,6 +231,57 @@ button { font: inherit; color: inherit; }
 .tag:hover { border-color: var(--text); }
 .tag-count { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
+/* 核心技能卡片 */
+.core-skills { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.core-skill { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: var(--border); border-radius: var(--radius); background: var(--surface); }
+.core-skill-name { margin: 0; font-size: 1.2rem; }
+.core-skill-name a { color: inherit; text-decoration: none; }
+.core-skill-name a:hover { text-decoration: underline; }
+.core-skill-meta { margin: 0; color: var(--accent); font-weight: 700; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.core-skill-path { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; row-gap: 4px; font-size: 0.92rem; }
+.core-skill-path li + li::before { content: "→"; color: var(--muted); padding-inline: 6px; }
+[dir="rtl"] .core-skill-path li + li::before { content: "←"; }
+.core-skill-summary { margin: 0; color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+.skill-usage { max-width: 420px; display: grid; gap: 8px; margin-block-end: 32px; }
+.more-link { margin-block-start: 24px; }
+
+/* 使用年限条：整条 = 第一段经历到今天，填色 = 用到这项技能的时间段 */
+.year-bar { position: relative; display: block; height: 8px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--line) 70%, transparent); }
+.year-seg { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: var(--accent); }
+
+/* 技能 × 经历矩阵 */
+.matrix-note { margin-block: -4px 16px; font-size: 0.9rem; max-width: var(--measure); }
+.skill-matrix-wrap { overflow-x: auto; }
+.skill-matrix { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.95rem; }
+.skill-matrix th, .skill-matrix td { padding: 10px 8px; text-align: center; vertical-align: middle; border-block-end: 1px solid var(--line); }
+.skill-matrix thead th { vertical-align: bottom; font-size: 0.85rem; font-weight: 600; }
+.skill-matrix .sm-skill { position: sticky; inset-inline-start: 0; z-index: 1; min-width: 170px; text-align: start; font-weight: 500; background: var(--bg); }
+.sm-skill a { color: inherit; text-decoration: none; }
+.sm-skill a:hover { text-decoration: underline; }
+.sm-station { min-width: 84px; }
+.sm-station-name { display: block; }
+.sm-station-years { display: block; color: var(--muted); font-weight: 400; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.skill-matrix .sm-group th { padding-block: 24px 8px; text-align: start; color: var(--muted); font-size: 0.8rem; font-weight: 600; text-transform: var(--kicker-transform); letter-spacing: var(--kicker-tracking); }
+.sm-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+a.sm-dot:hover, a.sm-dot:focus-visible { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 25%, transparent); }
+.sm-dot.is-empty { width: 6px; height: 6px; background: var(--line); }
+.skill-matrix .sm-time { min-width: 220px; text-align: start; }
+.sm-time-inner { display: flex; align-items: center; gap: 10px; }
+.sm-time-inner .year-bar { flex: 1; }
+.sm-duration { min-width: 6.5em; color: var(--muted); font-size: 0.85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sm-where { display: none; }
+/* 手机上放不下每段经历一列：隐藏经历列，把用过的经历写在技能名下面 */
+@media (max-width: 719px) {
+  .skill-matrix { min-width: 0; }
+  .skill-matrix .sm-station, .skill-matrix .sm-cell { display: none; }
+  .skill-matrix .sm-skill { position: static; min-width: 0; }
+  .skill-matrix .sm-time { min-width: 0; width: 40%; }
+  .sm-time-inner { flex-direction: column; align-items: stretch; gap: 4px; }
+  .sm-time-inner .year-bar { flex: none; }
+  .sm-where { display: block; margin-block-start: 2px; color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+}
+.skill-matrix tbody tr:not(.sm-group):hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+
 /* ---------- 证书与文件 ---------- */
 
 .doc-columns { display: grid; gap: 8px 40px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }

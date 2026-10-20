@@ -110,11 +110,34 @@
   var visibleQuotes = list("quotes").filter(function (q) { return q.consent === "yes" || q.consent === "not-needed"; });
   var visibleDocs = list("documents").filter(function (d) { return d.visibility && d.visibility !== "private"; });
 
+  // ---------- 技能：在哪段经历里用过、用了多久 ----------
+  // "经历"指 work、education、projects 里的条目。一段经历用到某项技能 = 条目自己的 skills 里有它，或者它下面的某个故事的 skills 里有它。
+  function ym(d) { var p = String(d || "").split("-").map(Number); return p[0] ? p[0] * 12 + ((p[1] || 1) - 1) : null; }
+  var NOW_YM = (function () { var n = new Date(); return n.getFullYear() * 12 + n.getMonth(); })();
+  var STATIONS = list("work").concat(list("education"), list("projects"))
+    .filter(function (e) { return e.id && ym(e.startDate) != null; })
+    .sort(function (a, b) { return ym(a.startDate) - ym(b.startDate); });
+  function stationEnd(e) { return e.endDate ? Math.max(ym(e.startDate), ym(e.endDate)) : NOW_YM; }
+  function stationStories(e, skillId) { return stories.filter(function (s) { return s.parent === e.id && (s.skills || []).indexOf(skillId) >= 0; }); }
+  function stationUses(e, skillId) { return (e.skills || []).indexOf(skillId) >= 0 || stationStories(e, skillId).length > 0; }
+  var USES = {};
   function skillUses(skillId) {
-    return {
+    if (USES[skillId]) return USES[skillId];
+    var stations = STATIONS.filter(function (e) { return stationUses(e, skillId); });
+    // 重叠的时间段合并后再算月数，避免同一段时间算两次
+    var spans = stations.map(function (e) { return [ym(e.startDate), stationEnd(e)]; }).sort(function (a, b) { return a[0] - b[0]; });
+    var merged = [];
+    spans.forEach(function (s) {
+      var last = merged[merged.length - 1];
+      if (last && s[0] <= last[1] + 1) last[1] = Math.max(last[1], s[1]); else merged.push(s.slice());
+    });
+    return (USES[skillId] = {
       stories: stories.filter(function (s) { return (s.skills || []).indexOf(skillId) >= 0; }),
-      entries: list("work").concat(list("projects")).filter(function (w) { return (w.skills || []).indexOf(skillId) >= 0; })
-    };
+      entries: stations,
+      spans: merged,
+      months: merged.reduce(function (n, s) { return n + s[1] - s[0] + 1; }, 0),
+      current: stations.some(function (e) { return !e.endDate; })
+    });
   }
 
   var HAS = {
@@ -477,28 +500,151 @@
     </section>`;
   }
 
-  function skillsBlock() {
+  function catLabel(cat) { var label = U("cat_" + cat); return label === "cat_" + cat ? cat : label; }
+
+  // 按类别分组；组内按使用时长排序，用得最久的在前
+  function skillGroups() {
     var groups = {};
     list("skills").forEach(function (s) { (groups[s.category || "other"] = groups[s.category || "other"] || []).push(s); });
+    Object.keys(groups).forEach(function (cat) {
+      groups[cat].sort(function (a, b) { return skillUses(b.id).months - skillUses(a.id).months; });
+    });
+    return groups;
+  }
+
+  function durationLabel(months) {
+    if (months <= 0) return "";
+    if (months < 12) return months === 1 ? U("one_month") : U("n_months", { n: months });
+    var y = Math.floor(months / 6) / 2; // 按半年向下取整，不夸大
+    if (y === 1) return U("one_year");
+    var n = y;
+    try { n = new Intl.NumberFormat(L).format(y); } catch (e) {}
+    return U("n_years", { n: n });
+  }
+
+  function sinceLabel(u) {
+    if (!u.spans.length) return "";
+    var a = Math.floor(u.spans[0][0] / 12), b = Math.floor(u.spans[u.spans.length - 1][1] / 12);
+    if (u.current) return U("since_year", { year: a });
+    return a === b ? String(a) : a + "–" + b;
+  }
+
+  function stationLabel(e) { return e.short != null ? T(e.short) : orgName(e); }
+  function stationYears(e) {
+    var a = Math.floor(ym(e.startDate) / 12);
+    if (!e.endDate) return a + "–";
+    var b = Math.floor(ym(e.endDate) / 12);
+    return a === b ? String(a) : a + "–" + b;
+  }
+
+  // 矩阵的列：至少用到一项技能的经历，按开始时间排
+  function matrixColumns() {
+    var all = list("skills");
+    return STATIONS.filter(function (e) { return all.some(function (s) { return stationUses(e, s.id); }); });
+  }
+  function skillRange() {
+    var cols = matrixColumns();
+    return cols.length ? [ym(cols[0].startDate), NOW_YM] : [NOW_YM, NOW_YM];
+  }
+
+  // 使用年限条：整条代表从第一段经历到今天，填色的部分是用到这项技能的时间段
+  function yearBar(u, range) {
+    var total = Math.max(1, range[1] - range[0] + 1);
+    return html`<span class="year-bar" aria-hidden="true">${u.spans.map(function (s) {
+      var a = Math.max(s[0], range[0]);
+      return html`<span class="year-seg" style="inset-inline-start:${((a - range[0]) / total * 100).toFixed(2)}%;width:${((s[1] - a + 1) / total * 100).toFixed(2)}%"></span>`;
+    })}</span>`;
+  }
+
+  // 核心技能：content.js 里标了 core: true 的（最多 4 个）；没有标的，自动选用在最多段经历里的 3 个
+  function coreSkills() {
+    var all = list("skills");
+    var core = all.filter(function (s) { return s.core; });
+    if (!core.length) {
+      core = all.filter(function (s) { return skillUses(s.id).entries.length > 1; }).sort(function (a, b) {
+        return skillUses(b.id).entries.length - skillUses(a.id).entries.length || skillUses(b.id).months - skillUses(a.id).months;
+      }).slice(0, 3);
+    }
+    return core.slice(0, 4);
+  }
+
+  function coreCards(range) {
+    var core = coreSkills();
+    if (!core.length) return "";
+    return html`<h2 class="subhead">${U("core_skills")}</h2>
+      <div class="core-skills">${core.map(function (s) {
+        var u = skillUses(s.id);
+        return html`<article class="core-skill">
+          <h3 class="core-skill-name"><a href="${href("skills", s.id)}">${T(s.name)}</a></h3>
+          ${u.entries.length ? html`<p class="core-skill-meta">${sinceLabel(u)} · ${durationLabel(u.months)}</p>${yearBar(u, range)}
+          <ol class="core-skill-path">${u.entries.map(function (e) {
+            var st = stationStories(e, s.id)[0];
+            return html`<li>${st ? html`<a href="${href("story", st.id)}">${stationLabel(e)}</a>` : stationLabel(e)}</li>`;
+          })}</ol>` : ""}
+          ${s.summary ? html`<p class="core-skill-summary">${T(s.summary)}</p>` : ""}
+        </article>`;
+      })}</div>`;
+  }
+
+  function skillMatrix(range) {
+    var cols = matrixColumns();
+    if (!cols.length) return "";
+    var groups = skillGroups();
+    return html`<h2 class="subhead">${U("skill_matrix")}</h2>
+      <p class="muted matrix-note">${U("matrix_note")}</p>
+      <div class="skill-matrix-wrap"><table class="skill-matrix">
+        <thead><tr>
+          <th scope="col" class="sm-skill">${U("skill")}</th>
+          ${cols.map(function (e) { return html`<th scope="col" class="sm-station"><span class="sm-station-name">${stationLabel(e)}</span><span class="sm-station-years">${stationYears(e)}</span></th>`; })}
+          <th scope="col" class="sm-time"><span class="sm-station-name">${U("time_used")}</span><span class="sm-station-years">${Math.floor(range[0] / 12)}–${Math.floor(range[1] / 12)}</span></th>
+        </tr></thead>
+        ${Object.keys(groups).map(function (cat) {
+          return html`<tbody>
+            <tr class="sm-group"><th scope="rowgroup" colspan="${cols.length + 2}">${catLabel(cat)}</th></tr>
+            ${groups[cat].map(function (s) {
+              var u = skillUses(s.id);
+              return html`<tr>
+                <th scope="row" class="sm-skill"><a href="${href("skills", s.id)}">${T(s.name)}</a>
+                  ${u.entries.length ? html`<span class="sm-where">${u.entries.map(stationLabel).join(" → ")}</span>` : ""}</th>
+                ${cols.map(function (e) {
+                  if (!stationUses(e, s.id)) return html`<td class="sm-cell"><span class="sm-dot is-empty" aria-hidden="true"></span></td>`;
+                  var st = stationStories(e, s.id)[0], label = stationLabel(e);
+                  return html`<td class="sm-cell">${st
+                    ? html`<a class="sm-dot" href="${href("story", st.id)}" title="${label}: ${T(st.title)}" aria-label="${label}: ${T(st.title)}"></a>`
+                    : html`<span class="sm-dot" role="img" title="${label}" aria-label="${label}"></span>`}</td>`;
+                })}
+                <td class="sm-time">${u.entries.length ? html`<span class="sm-time-inner">${yearBar(u, range)}<span class="sm-duration">${durationLabel(u.months)}</span></span>` : ""}</td>
+              </tr>`;
+            })}
+          </tbody>`;
+        })}
+      </table></div>`;
+  }
+
+  function skillsBlock() {
+    var groups = skillGroups();
     return html`<div class="skill-groups">${Object.keys(groups).map(function (cat) {
-      var label = U("cat_" + cat);
       return html`<div class="skill-group">
-        <h3 class="skill-cat">${label === "cat_" + cat ? cat : label}</h3>
+        <h3 class="skill-cat">${catLabel(cat)}</h3>
         <ul class="tags">${groups[cat].map(function (s) {
-          var n = skillUses(s.id).stories.length;
-          return html`<li><a class="tag" href="${href("skills", s.id)}">${T(s.name)}${n ? html` <span class="tag-count" title="${U("stories_count", { n: n })}">${n}</span>` : ""}</a></li>`;
+          return html`<li><a class="tag" href="${href("skills", s.id)}">${T(s.name)}</a></li>`;
         })}</ul>
       </div>`;
     })}</div>`;
   }
 
+  // 技能页：核心技能卡片 + 技能×经历矩阵；首页的技能版块：核心技能卡片 + 分组标签 + 去技能页的链接
   function skillsSection(asPage) {
     if (!HAS.skills) return "";
     var H = asPage ? "h1" : "h2";
+    var range = skillRange();
+    var hasMatrix = matrixColumns().length > 0;
     return html`<section class="section section-skills" id="skills" aria-labelledby="skills-title">
       <div class="wrap">
         ${raw("<" + H + ' class="section-title" id="skills-title">' + esc(U("skills")) + "</" + H + ">")}
-        ${skillsBlock()}
+        ${coreCards(range)}
+        ${asPage && hasMatrix ? skillMatrix(range) : skillsBlock()}
+        ${!asPage && hasMatrix ? html`<p class="more-link"><a href="${href("skills")}">${U("skill_matrix")} <span aria-hidden="true" class="arrow">→</span></a></p>` : ""}
       </div>
     </section>`;
   }
@@ -714,9 +860,11 @@
       <div class="wrap">
         <p class="back"><a href="${href("skills")}"><span aria-hidden="true" class="arrow arrow-back">←</span> ${U("all_skills")}</a></p>
         <h1 class="section-title">${U("stories_with_skill", { name: T(s.name) })}</h1>
+        ${uses.entries.length ? html`<div class="skill-usage"><p class="core-skill-meta">${sinceLabel(uses)} · ${durationLabel(uses.months)}</p>${yearBar(uses, skillRange())}</div>` : ""}
         ${uses.stories.length ? html`<div class="cards cards-featured">${uses.stories.map(function (x) { return storyCard(x); })}</div>` : ""}
         ${uses.entries.length ? html`<h2 class="subhead">${U("used_in")}</h2><ul class="plain-list">${uses.entries.map(function (w) {
-          return html`<li><strong>${w.position ? T(w.position) : T(w.name)}</strong>${w.position ? html` · ${T(w.name)}` : ""} <span class="muted">${period(w.startDate, w.endDate)}</span></li>`;
+          var what = T(w.position) || T(w.studyType);
+          return html`<li><strong>${what || orgName(w)}</strong>${what ? html` · ${orgName(w)}` : ""} <span class="muted">${period(w.startDate, w.endDate, w.expectedEnd)}</span></li>`;
         })}</ul>` : ""}
       </div>
     </section>`;

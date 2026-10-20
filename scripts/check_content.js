@@ -194,6 +194,25 @@ for (const d of S.documents || []) {
 }
 for (const s of S.skills || []) if (typeof s.name !== "string" && !isLangObj(s.name)) err(`skills.${s.id}.name：应该是文字或多语言对象`);
 
+// ---------- 技能页：技能 × 经历矩阵 ----------
+// 一段经历用到某项技能 = 条目自己的 skills 里有它，或者它下面的故事（parent 指向它）的 skills 里有它
+{
+  const entries = [].concat(S.work || [], S.education || [], S.projects || []).filter((e) => e.id && e.startDate);
+  const uses = (e, id) => (e.skills || []).includes(id) || (S.stories || []).some((st) => st.parent === e.id && (st.skills || []).includes(id));
+  for (const sk of S.skills || []) {
+    if (!entries.some((e) => uses(e, sk.id))) warn(`skills.${sk.id}：没有挂在任何经历上，技能页矩阵里这一行是空的。把它加进用到它的每段经历（work / education / projects）的 skills`);
+    if (sk.core && !sk.summary) warn(`skills.${sk.id}：标了 core，但没有 summary。核心技能卡片需要一句话说明在哪些经历里怎么用的`);
+  }
+  const core = (S.skills || []).filter((sk) => sk.core);
+  if (core.length > 4) warn(`skills：有 ${core.length} 个 core，卡片只显示前 4 个。核心技能挑 3–4 个`);
+  const cols = entries.filter((e) => (S.skills || []).some((sk) => uses(e, sk.id)));
+  for (const e of cols) {
+    const label = e.short != null ? e.short : e.name != null ? e.name : e.institution;
+    const longest = Math.max(...langs.map((l) => String(typeof label === "object" && label ? label[l] || "" : label || "").length));
+    if (longest > 22) warn(`${e.id}：在技能矩阵里当列名太长（${longest} 个字符）。加一个 short，比如 "TUM"、"M.Sc. Darmstadt"`);
+  }
+}
+
 // ---------- 日期：已经结束的事情不能显示成"至今" ----------
 
 for (const e of S.education || []) if (!e.endDate && !e.expectedEnd) warn(`education.${e.id}：没有 endDate 也没有 expectedEnd，页面会显示"至今"。已经毕业的写 endDate，在读的写 expectedEnd`);
