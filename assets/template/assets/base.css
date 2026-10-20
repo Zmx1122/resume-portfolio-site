@@ -246,6 +246,13 @@ button { font: inherit; color: inherit; }
 .doc-thumb.is-muted { filter: blur(3px) grayscale(1); opacity: 0.6; }
 .doc-icon { font-size: 1.6rem; color: var(--muted); }
 .doc-body { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 0; }
+/* 证书与文件页：大卡片，缩略图显示文件上半部分；故事页里的"证据"保持紧凑的横排 */
+.doc-grid:not(.doc-grid-small) { grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 16px; }
+.doc-grid:not(.doc-grid-small) .doc-link { flex-direction: column; align-items: stretch; gap: 0; padding: 0; height: 100%; overflow: hidden; }
+.doc-grid:not(.doc-grid-small) .doc-media { flex: none; width: 100%; height: 190px; border-radius: 0; border-block-end: var(--border); }
+.doc-grid:not(.doc-grid-small) .doc-thumb { object-position: top; }
+.doc-grid:not(.doc-grid-small) .doc-icon { font-size: 2.4rem; }
+.doc-grid:not(.doc-grid-small) .doc-body { padding: 12px 14px 14px; }
 .doc-body .kicker { margin: 0; }
 .doc-title { font-weight: 600; line-height: 1.3; }
 
