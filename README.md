@@ -112,7 +112,9 @@ flowchart TD
 你上传给 AI 的材料，会被你使用的那个 AI 服务处理。上传什么、网站上公开什么，**由你自己决定、自己负责**。AI 默认会建议不公开出生日期、住址、证件号、电话、成绩、签证信息、签名等，也会在发布前和你一起检查。发布前请你自己再看一遍网站。
 
 **做完以后还能改吗？**
-可以。回到同一个对话（或者新开一个对话，把网站文件夹交给 AI），说要改什么，改好后重新上传 `site` 文件夹，链接不变。
+可以，这个 skill 有专门的**维护模式**。换工作、毕业、发了新论文、有了新证书或照片时，跟 AI 说"更新我的网站"，告诉它网站文件夹在哪（或者发网站网址），把新材料发给它。AI 会先给网站做个体检，再只改需要改的地方（比如旧工作写上结束日期、加上新的一站、更新技能），记进更新日志，然后发布到同一个网址。
+
+建议每 3 个月，或者每次开始投新一轮简历之前，跟 AI 说一句"帮我检查一下网站"：它会检查有没有过时的内容（比如已经离职的工作还显示"至今"）、打不开的链接，以及线上和本地是不是一致。
 
 **AI 中途卡住或者乱了怎么办？**
 跟它说"请重新读一遍 SKILL.md，告诉我现在进行到哪一步了"。能操作文件的 AI 会把进度记在 `我的简历网站/_work/` 里，下次可以接着做。
@@ -166,7 +168,7 @@ resume-portfolio-site/
 ├── SKILL.md                         # 总流程：环境判断、阶段 0–8、聊天模式
 ├── references/
 │   ├── material-pool.md             # 资料池：分类、资料卡、敏感度分级、交叉比对
-│   ├── doc-types/                   # 8 类材料的提取规则
+│   ├── doc-types/                   # 10 类材料的提取规则
 │   ├── interview-guide.md           # 问题库、追问技巧、特殊情况
 │   ├── content-model.md             # content.js 的数据结构和自检清单
 │   ├── information-architecture.md  # 页面类型、布局、网址规则
@@ -178,6 +180,7 @@ resume-portfolio-site/
 └── scripts/
     ├── check_content.js             # 内容和网站文件夹检查（需要 Node.js）
     ├── split_pdf.py                 # 拆分合并的 PDF（需要 Python 和 pypdf）
+    ├── health_check.js              # 维护模式的定期体检：时效、链接、线上与本地是否一致
     └── publish_github_pages.js      # 发布到 GitHub Pages（需要 Node.js、git、已登录的 gh）
 ```
 
@@ -199,6 +202,12 @@ node scripts/check_content.js assets/template/content.js
 
 ```bash
 node scripts/check_content.js assets/template/content.js 'S.work[0].position = "Werkstudentin"'
+```
+
+维护模式的体检脚本（时效、外部链接、线上和本地的 `content.js` 是否一致）：
+
+```bash
+node scripts/health_check.js 我的简历网站/site --url https://用户名.github.io/
 ```
 
 ### 已知限制
@@ -228,8 +237,11 @@ node scripts/check_content.js assets/template/content.js 'S.work[0].position = "
 
 **For developers:** the repo contains:
 - `SKILL.md`, which sets out the workflow and covers both full and chat-only modes
-- `references/`, with the material pool, extraction rules for 8 document types, the interview guide, a JSON Resume-based content model, the information architecture, design principles, 6 style specs, the component guide and the deployment guide
+- `references/`, with the material pool, extraction rules for 10 document types, the interview guide, a JSON Resume-based content model, the information architecture, design principles, 6 style specs, the component guide and the deployment guide
 - `assets/template/`, a no-build static site with hash routing, up to 3 languages incl. RTL, 6 styles, dark mode, a lightbox, document visibility levels and a printable one-pager
 - `scripts/check_content.js`, a content and site-folder checker
+- `scripts/health_check.js`, a health check for the maintenance mode (stale dates, broken links, live vs. local)
+
+**Maintenance mode:** after the site is live, users come back with "update my website" and their site folder or URL. The agent reads the change log and publish log, runs a health check, updates only what changed (and everything that depends on it), logs the change, and republishes to the same address. The publish script refuses to overwrite edits made directly on GitHub.
 
 MIT licensed; see `THIRD_PARTY_NOTICES.md` for credits.

@@ -194,6 +194,16 @@ for (const d of S.documents || []) {
 }
 for (const s of S.skills || []) if (typeof s.name !== "string" && !isLangObj(s.name)) err(`skills.${s.id}.name：应该是文字或多语言对象`);
 
+// ---------- 论文列表 ----------
+for (const [i, p] of (S.publications || []).entries()) {
+  if (p.image) warn(`publications.${i}.image：论文列表不再显示封面截图，删掉这个字段和对应的图片文件`);
+  if (p.name && typeof p.name === "object") warn(`publications.${i}.name：论文题目在所有语言里都用正式题目原文，写成一个字符串`);
+}
+const myName = typeof (S.basics || {}).name === "string" ? S.basics.name : "";
+if (myName && (S.publications || []).some((p) => p.authors) && !(S.publications || []).some((p) => String(p.authors || "").split(/,\s*/).includes(myName))) {
+  warn(`publications：作者列表里找不到 "${myName}"（basics.name）。写法一致，列表里你的名字才会加粗`);
+}
+
 // ---------- 技能页：技能 × 经历矩阵 ----------
 // 一段经历用到某项技能 = 条目自己的 skills 里有它，或者它下面的故事（parent 指向它）的 skills 里有它
 {

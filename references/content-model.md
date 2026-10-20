@@ -255,14 +255,16 @@ ui: {
 
 ### publications：论文与发表
 
-在 JSON Resume 的基础上（`name` 译、`publisher` 可译、`releaseDate`、`url`、`summary` 译）增加：
+在 JSON Resume 的基础上（`name`、`publisher` 可译、`releaseDate`、`url`）增加下面的字段。`name` 是**正式题目原文**，所有语言都一样，写成一个字符串。
+
+页面参照 Google Scholar 显示成列表：题目（链接）、作者（用户自己的名字自动加粗，要和 `basics.name` 写法一致）、出处和日期，最后是标签。**不放封面截图**：截图看不清、和题目重复，还把列表拉得很长。`summary` 不显示，论文的背景和贡献写进 `story` 指向的故事。
 
 | 字段 | 说明 |
 |---|---|
 | `url` | 论文链接，DOI 链接优先。题目、作者、出版信息要从论文本身、DOI 页面、出版社或 Google Scholar 核对，不要从照片或幻灯片推断 |
 | `authors` | 作者列表，例如 `"Anna Beispiel, Mei Chen, …"` |
 | `role` | 译。用户的作者身份和实际贡献，例如 `{ de: "Zweitautorin · Implementierung & Manuskript", en: "Second author · implementation & manuscript", zh: "第二作者 · 负责实现与手稿" }`。显示为标签 |
-| `image` | 论文首页截图，用作卡片封面（可选） |
+| `award` | 译，可选。论文获得的奖项，例如 `{ de: "Best Paper Award", en: "Best Paper Award", zh: "最佳论文奖" }`。显示为强调色标签 |
 | `story` | 所属故事的 id。故事页会列出所有指向它的论文 |
 | `sources` | |
 

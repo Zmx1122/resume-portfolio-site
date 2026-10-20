@@ -439,21 +439,19 @@ dialog { color: var(--text); }
 
 /* ---------- 论文卡片 ---------- */
 
-.pub-gallery { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
-.pub-card { background: var(--bg); border: var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
-.pub-cover { display: block; background: #ffffff; border-block-end: var(--border); aspect-ratio: 4 / 3; overflow: hidden; }
-.pub-cover-img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
-.pub-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.pub-body .kicker { margin: 0; }
-.pub-title { font-size: 1.02rem; margin: 0; line-height: 1.35; }
+/* 论文列表（参照 Google Scholar，不放封面） */
+.pub-list { list-style: none; margin: 0; padding: 0; max-width: 860px; }
+.pub-item { padding-block: 16px; border-block-end: var(--border); }
+.pub-item:first-child { padding-block-start: 0; }
+.pub-title { margin: 0; font-size: 1.02rem; line-height: 1.4; }
 .pub-title a { color: var(--text); text-decoration: none; }
-.pub-title a:hover { text-decoration: underline; }
-.pub-authors, .pub-meta, .pub-summary { margin: 0; font-size: 0.88rem; }
-.pub-body .small-link { margin-block-start: auto; padding-block-start: 6px; }
-.paper-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
-.paper-list li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.paper-title { line-height: 1.4; }
-.paper-meta { font-size: 0.9rem; }
+.pub-title a:hover { color: var(--link); text-decoration: underline; }
+.pub-ext { color: var(--muted); font-weight: 400; }
+.pub-authors { margin: 4px 0 0; font-size: 0.92rem; }
+.pub-authors strong { font-weight: 600; }
+.pub-meta { margin: 2px 0 0; font-size: 0.9rem; }
+.pub-tags { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.pub-award { border-color: var(--accent); color: var(--accent); }
 .cv-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* ---------- 页脚 ---------- */

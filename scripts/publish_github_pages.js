@@ -1,4 +1,4 @@
-// 用法：node scripts/publish_github_pages.js <网站文件夹> [--repo 仓库名] [--account GitHub用户名]
+// 用法：node scripts/publish_github_pages.js <网站文件夹> [--repo 仓库名] [--account GitHub用户名] [--overwrite]
 // 例如：node scripts/publish_github_pages.js 我的简历网站/site --account zmx1122
 // 电脑上登录了多个 GitHub 账号时，用 --account 锁定发布到哪个账号；不一致就停止。
 //
@@ -13,6 +13,10 @@
 //   创建的，就停止，不碰它。
 // - 提交使用 GitHub 提供的隐私邮箱，不会把用户的真实邮箱写进公开仓库。
 // - 不会发布 _work/、preview-*.html 等工作文件。
+// - 仓库里最新的提交不是本脚本发布的（比如用户在 GitHub 网页上直接改过文件），就停止，
+//   免得把用户的修改覆盖掉。先把线上的修改合并进本地，再发布；确认可以覆盖时加 --overwrite。
+// - 发布成功后，网站文件夹旁边有 _work/ 时，在 _work/publish-log.md 里记一行（日期、账号、仓库、网址），
+//   维护模式下次回来时就知道网站发布在哪里。
 
 const { spawnSync } = require("child_process");
 const fs = require("fs");
@@ -59,6 +63,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const repoFlag = args.indexOf("--repo");
   const accountFlag = args.indexOf("--account");
   const wantAccount = accountFlag >= 0 ? (args[accountFlag + 1] || "").toLowerCase() : null;
+  const overwrite = args.includes("--overwrite");
   const flagValues = new Set([repoFlag, accountFlag].filter((i) => i >= 0).map((i) => i + 1));
   const siteArg = args.find((a, i) => !a.startsWith("--") && !flagValues.has(i));
   if (!siteArg) fail("请给出网站文件夹，例如：node scripts/publish_github_pages.js 我的简历网站/site", 2);
@@ -96,6 +101,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   }
   if (exists(repo) && !ours(repo)) {
     fail(`GitHub 上已经有一个叫 ${repo} 的仓库，而且不是本脚本创建的，为了不覆盖它，停止发布。\n可以换一个名字：node scripts/publish_github_pages.js ${siteArg} --repo my-cv`);
+  }
+  if (exists(repo) && !overwrite) {
+    const last = run("gh", ["api", `repos/${login}/${repo}/commits/main`, "--jq", ".commit.message"]);
+    if (last.ok && !/^Publish website \(/.test(last.out.trim())) {
+      fail(`仓库 ${login}/${repo} 里最新的提交不是本脚本发布的："${last.out.trim().split("\n")[0]}"。\n` +
+        `可能有人在 GitHub 网页上直接改过网站。直接发布会覆盖这些修改，所以停止。\n` +
+        `先看线上改了什么（https://github.com/${login}/${repo}/commits/main），把修改合并进本地的网站文件夹；\n` +
+        `确认线上的修改可以丢掉时，加 --overwrite 再发布。`);
+    }
   }
   const isUserSite = repo.toLowerCase() === userSite;
   const url = isUserSite ? `https://${userSite}/` : `https://${login.toLowerCase()}.github.io/${repo}/`;
@@ -140,10 +154,22 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const r = await httpGet(`${url}published.txt?t=${Date.now()}`);
     if (r.status === 200 && r.body.trim() === publishId) {
       console.log(`\n\n发布成功：${url}\n仓库：https://github.com/${login}/${repo}`);
+      logPublish(siteDir, `${new Date().toISOString().slice(0, 16).replace("T", " ")} · 账号 ${login} · 仓库 ${login}/${repo} · ${url} · 发布编号 ${publishId}`);
       return;
     }
     process.stdout.write(".");
     await sleep(6000);
   }
   console.log(`\n\n文件已经上传，但网站还没生效。通常几分钟内会好，稍后打开：${url}`);
+  logPublish(siteDir, `${new Date().toISOString().slice(0, 16).replace("T", " ")} · 账号 ${login} · 仓库 ${login}/${repo} · ${url} · 发布编号 ${publishId}（上传后还没确认生效）`);
 })().catch((e) => fail(String(e && e.message || e)));
+
+// 在网站文件夹旁边的 _work/publish-log.md 里记一行；没有 _work/（比如直接发布 demo）就不记
+function logPublish(siteDir, line) {
+  const work = path.join(path.dirname(siteDir), "_work");
+  if (!fs.existsSync(work)) return;
+  const log = path.join(work, "publish-log.md");
+  if (!fs.existsSync(log)) fs.writeFileSync(log, "# 发布记录\n\n由 publish_github_pages.js 自动写入。维护模式下次发布时，用这里记录的账号和仓库。\n\n");
+  fs.appendFileSync(log, `- ${line}\n`);
+  console.log(`已记录到 ${path.relative(process.cwd(), log)}`);
+}

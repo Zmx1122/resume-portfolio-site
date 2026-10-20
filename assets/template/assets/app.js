@@ -467,29 +467,40 @@
   function publicationsSection() {
     var pubs = list("publications").slice().sort(function (a, b) { return (b.releaseDate || "").localeCompare(a.releaseDate || ""); });
     if (!pubs.length) return "";
+    // 所有论文都属于同一个故事时，故事链接只在列表下面放一次，不在每篇论文后面重复
+    var storyIds = pubs.map(function (p) { return p.story && get("stories", p.story) ? p.story : ""; });
+    var oneStory = pubs.length > 1 && storyIds[0] && storyIds.every(function (id) { return id === storyIds[0]; }) ? get("stories", storyIds[0]) : null;
     return html`<section class="section section-publications" id="publications" aria-labelledby="publications-title">
       <div class="wrap">
         ${sectionTitle("publications", U("publications"))}
-        <div class="pub-gallery">${pubs.map(pubCard)}</div>
+        <ol class="pub-list">${pubs.map(function (p) { return pubItem(p, !oneStory); })}</ol>
+        ${oneStory ? html`<p class="more-link"><a href="${href("story", oneStory.id)}">${T(oneStory.title)} <span aria-hidden="true" class="arrow">→</span></a></p>` : ""}
       </div>
     </section>`;
   }
 
-  function pubCard(p) {
+  // 论文列表，参照 Google Scholar：题目（链接）、作者（自己的名字加粗）、出处和日期；
+  // 长短不一的标签（作者身份、奖项）放在最后，题目的起点才对得齐。不放封面截图
+  function pubAuthors(authors) {
+    var me = T((SITE.basics || {}).name);
+    return String(authors).split(/,\s*/).map(function (a, i) {
+      return html`${i ? ", " : ""}${me && a.trim() === me ? html`<strong>${a}</strong>` : a}`;
+    });
+  }
+  function pubItem(p, withStory) {
     var link = safeUrl(p.url);
-    var cover = p.image || p.media;
-    var title = link ? html`<a href="${link}" target="_blank" rel="noopener">${T(p.name)}</a>` : T(p.name);
-    return html`<article class="pub-card">
-      ${cover ? html`<a class="pub-cover" href="${link || "#"}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">${img(cover, "", "pub-cover-img")}</a>` : ""}
-      <div class="pub-body">
-        ${p.role ? html`<p class="kicker">${T(p.role)}</p>` : ""}
-        <h3 class="pub-title">${title}</h3>
-        ${p.authors ? html`<p class="pub-authors">${p.authors}</p>` : ""}
-        <p class="muted pub-meta">${[T(p.publisher), fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</p>
-        ${p.summary ? html`<p class="pub-summary">${T(p.summary)}</p>` : ""}
-        ${p.story && get("stories", p.story) ? html`<a class="small-link" href="${href("story", p.story)}">${U("view_story")} →</a>` : ""}
-      </div>
-    </article>`;
+    var hasStory = withStory && p.story && get("stories", p.story);
+    var tags = p.role || p.award || hasStory;
+    return html`<li class="pub-item">
+      <h3 class="pub-title">${link ? html`<a href="${link}" target="_blank" rel="noopener">${T(p.name)}<span class="pub-ext" aria-hidden="true"> ↗</span></a>` : T(p.name)}</h3>
+      ${p.authors ? html`<p class="pub-authors">${pubAuthors(p.authors)}</p>` : ""}
+      <p class="pub-meta muted">${[T(p.publisher), fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</p>
+      ${tags ? html`<p class="pub-tags">
+        ${p.award ? html`<span class="badge pub-award">${T(p.award)}</span>` : ""}
+        ${p.role ? html`<span class="badge">${T(p.role)}</span>` : ""}
+        ${hasStory ? html`<a class="small-link" href="${href("story", p.story)}">${U("view_story")} →</a>` : ""}
+      </p>` : ""}
+    </li>`;
   }
 
   function educationSection() {
@@ -831,13 +842,7 @@
       ${others.length ? html`<div class="wrap story-media gallery">${others.map(function (m) { return mediaFigure(m, group, false); })}</div>` : ""}
       <div class="wrap story-foot">
         ${quotes.length ? html`<div class="quotes">${quotes.map(quoteBlock)}</div>` : ""}
-        ${papers.length ? html`<div class="story-papers"><h2 class="subhead">${U("publications")}</h2><ul class="paper-list">${papers.map(function (p) {
-          var link = safeUrl(p.url);
-          // 题目放在最前面并左对齐；长短不一的作者身份标签放在最后
-          return html`<li><strong class="paper-title">${link ? html`<a href="${link}" target="_blank" rel="noopener">${T(p.name)}</a>` : T(p.name)}</strong>
-            <span class="paper-meta muted">${[p.authors, T(p.publisher), fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</span>
-            ${p.role ? html`<span class="badge paper-role">${T(p.role)}</span>` : ""}</li>`;
-        })}</ul></div>` : ""}
+        ${papers.length ? html`<div class="story-papers"><h2 class="subhead">${U("publications")}</h2><ol class="pub-list">${papers.map(function (p) { return pubItem(p, false); })}</ol></div>` : ""}
         ${evidence.length ? html`<div class="evidence"><h2 class="subhead">${U("evidence")}</h2><ul class="doc-grid doc-grid-small">${evidence.map(docCard)}</ul></div>` : ""}
         ${(s.skills || []).length ? html`<div class="story-skills"><h2 class="subhead">${U("skills_used")}</h2>${skillTags(s.skills)}</div>` : ""}
         ${siblings.length ? html`<div class="siblings"><h2 class="subhead">${U("more_in", { name: orgName(p) })}</h2>${storyLinks(siblings.map(function (x) { return x.id; }))}</div>` : ""}
