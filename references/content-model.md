@@ -38,7 +38,7 @@ window.SITE = {
 - **id** 用小写英文和连字符，例如 `"muster-dashboard"`。故事的 id 同时是网址的一部分（`#/de/story/muster-dashboard`），所以起一个看得懂的名字，起好之后不要改。
 - **sources** 记录这一条内容的来源：`M` 开头是资料池里的材料，`I` 开头是采访回答，例如 `["M03", "I08"]`。每个经历、故事、证书、引用都要有 `sources`。它不会显示在网站上，但让你和用户随时能查"这句话是从哪来的"。
 - **没有的信息就不写这个字段**，不要写空字符串、`"n/a"`、`"暂无"`。页面看到字段不存在，就不显示那一块。
-- **公开控制**：联系方式等单项信息用 `show: false` 隐藏；文件用 `visibility` 控制（见第 4 节"文件"）。
+- **不公开的信息不写进来。** `content.js` 本身就是网站的一部分，发布后任何人都能直接下载它。所以电话、成绩等用户不想公开的信息，**直接不写**，不要写进来再设成隐藏。文件用 `visibility` 控制（见第 4 节"文件"）。
 - **引用其他条目用 id**：故事用 `parent` 指向它属于的经历或教育；经历用 `stories` 列出它的故事；证据用文件 id。不要在两个地方重复写同一段文字。
 
 ## 3. 多语言
@@ -112,7 +112,7 @@ ui: {
 | `label` | 译。一句话身份，例如"数据分析方向硕士生" |
 | `headline` | 译。首页定位语，一到两句，围绕核心叙事 |
 | `image` | 头像路径，例如 `"assets/img/avatar.jpg"`；用户不放头像就不写 |
-| `email`、`phone` | 对象 `{ value, show }`；电话默认 `show: false` |
+| `email`、`phone` | 对象 `{ value }`。只写用户同意公开的；电话通常不写 |
 | `location` | `{ city, countryCode }`，例如 `{ city: "München", countryCode: "DE" }` |
 | `profiles` | `[{ network: "LinkedIn", url }]`，GitHub、个人博客等同理 |
 | `availability` | `{ type: "Werkstudent", from: "2027-04", hours: 译, note: 译 }`，首页快速信息用 |
@@ -125,7 +125,7 @@ ui: {
 | `id` | |
 | `name`、`url` | 公司名、官网 |
 | `position` | 译。正式职位 |
-| `type` | `"Vollzeit"`、`"Werkstudent"`、`"Praktikum"`、`"HiWi"`、`"Freelance"`、`"Ehrenamt"` 等 |
+| `type` | 写这些固定值之一，页面会自动翻译成每种语言：`"Vollzeit"`、`"Teilzeit"`、`"Werkstudent"`、`"Praktikum"`、`"HiWi"`、`"Abschlussarbeit"`、`"Freelance"`、`"Ehrenamt"`。需要特别的写法（比如德语用阴性 Werkstudentin）时，写成多语言对象 `{ de: "Werkstudentin", en: "Working student", zh: "Werkstudent" }` |
 | `location` | 城市，远程写 `"Remote"` |
 | `startDate`、`endDate` | |
 | `summary` | 译。一句话说明这段经历 |
@@ -143,7 +143,7 @@ ui: {
 | `studyType` | 译。例如 "Master of Science" |
 | `area` | 译。专业 |
 | `startDate`、`endDate` | 还在读的不写 `endDate`，写 `expectedEnd` |
-| `score` | `{ value: "1.7", scale: "DE", show: true }`；`show` 由用户决定 |
+| `score` | `{ value: "1.7", scale: "DE" }`。只有用户同意公开成绩时才写 |
 | `courses` | `[{ name: 译, grade, ects }]`，4–8 门相关课程 |
 | `thesis` | `{ title: 译, grade, story: "故事 id" }` |
 | `stories`、`evidence`、`sources` | |
@@ -154,7 +154,9 @@ ui: {
 
 ### stories：故事（网站的核心）
 
-故事是网站上最有分量的内容：一段经历、一个项目或一篇论文的完整讲述，对应一个故事详情页。数量通常 3–8 个，其中 2–4 个设为精选。
+故事是网站上最有分量的内容：一段经历、一个项目或一篇论文的完整讲述，对应一个故事详情页。数量通常 3–8 个，其中 1–4 个设为精选。精选宁缺毋滥：内容单薄的故事不要为了凑数设成精选。
+
+**一个故事只挂在一个地方**：只在它所属的经历（或教育、项目）的 `stories` 里列一次。比赛故事如果已经由 `awards` 的 `story` 指向，就不要再列进教育的 `stories`，否则时间线上会出现两次。
 
 | 字段 | 说明 |
 |---|---|
@@ -165,7 +167,7 @@ ui: {
 | `title` | 译。用结果或问题来起标题，不要只写职位名 |
 | `standfirst` | 译。一句话导语，卡片上也显示 |
 | `role` | 译。用户在这件事里的角色 |
-| `period` | `{ start, end }` |
+| `period` | `{ start, end }`；只有一个日期的（比如一次比赛）写 `{ date: "2021-02" }` |
 | `problem` | 译。背景和要解决的问题 |
 | `actions` | 每一项译。用户亲手做了什么，2–5 条 |
 | `outcome` | 译。结果 |
@@ -180,7 +182,10 @@ ui: {
 
 ```js
 { id: "power-bi", name: "Power BI", category: "data" }
+{ id: "modelling", name: { de: "Mathematische Modellierung", en: "Mathematical modelling", zh: "数学建模" }, category: "data" }
 ```
+
+工具和编程语言的名字（Python、Power BI）直接写；需要翻译的技能写成多语言对象。
 
 技能**不写等级**。页面会自动统计每项技能出现在哪些故事里，用故事来证明能力。没有挂在任何故事或经历上的技能，问用户在哪里用过；实在没有，就放在次要位置或不放。
 
@@ -268,15 +273,16 @@ contact: {
 
 ## 5. 写完后的自检
 
-整理完 `content.js`，逐条检查，有问题就修好或者问用户。能运行 Node.js 时，`node scripts/check_content.js site/content.js` 会自动检查第 1、2、4、5、6、7、8 条；第 3 条要对照 `_work/facts.md` 人工看。
+整理完 `content.js`，逐条检查，有问题就修好或者问用户。能运行 Node.js 时，`node scripts/check_content.js site/content.js` 会自动检查除第 3 条以外的全部项目，还会检查引用的图片和文件是否存在、网站文件夹里有没有多余的文件、风格设置是否一致；第 3 条要对照 `_work/facts.md` 人工看。
 
-1. 每个需要翻译的字段，`meta.languages` 里的每种语言都有内容。
+1. 每个需要翻译的字段都写成了多语言对象（不是普通字符串），`meta.languages` 里的每种语言都有内容。
 2. 每个 `parent`、`stories`、`skills`、`evidence`、`document`、`quotes` 里的 id 都能找到对应条目。
 3. 每个经历、故事、证书、引用都有 `sources`，而且这些来源在 `_work/facts.md` 里是"已确认"状态。
 4. `metrics` 里的每个数字都有来源。
-5. 精选故事 2–4 个，每个都有至少一张带说明的图，或者至少一份证据。
+5. 精选故事 1–4 个，每个都有至少一张带说明的图，或者至少一份证据。
 6. `consent` 不是 `"yes"` 的推荐信引用不会显示。
-7. `visibility` 不是 `public` 的文件，`site/` 文件夹里没有它的原件。
+7. `visibility` 不是 `public` 的文件，`site/` 文件夹里没有它的原件；`site/assets/img/` 和 `site/assets/docs/` 里没有用不到的文件（比如模板的演示文件）。
+9. 没有写进来再隐藏的信息（`show: false`），可以开始工作的日期不早于今天。
 8. 没有空字符串、`"n/a"` 之类的占位内容。
 
 ## 6. 和 JSON Resume 的对应关系

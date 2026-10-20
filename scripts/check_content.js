@@ -1,81 +1,204 @@
 // 用法：node scripts/check_content.js site/content.js
-// 按 references/content-model.md 第 5 节的规则检查 content.js，有问题逐条列出，没问题输出 OK。
-// Checks a content.js against the self-check rules in references/content-model.md.
+// 按 references/content-model.md 第 5 节的规则检查 content.js。
+// 同时检查 content.js 所在的网站文件夹：引用的文件是否存在、有没有不该公开的多余文件、风格设置是否一致。
+// "错误"必须修好；"提醒"请看一眼，确认没问题即可。有错误时退出码为 1。
+
 const fs = require("fs");
+const path = require("path");
 const vm = require("vm");
 
 const file = process.argv[2];
+if (!file) { console.log("用法：node scripts/check_content.js site/content.js"); process.exit(2); }
+const siteDir = path.dirname(path.resolve(file));
 const ctx = { window: {} };
-vm.runInNewContext(fs.readFileSync(file, "utf8"), ctx);
+try {
+  vm.runInNewContext(fs.readFileSync(file, "utf8"), ctx);
+} catch (e) {
+  console.log("错误：content.js 有语法错误，网页会一片空白。\n  " + e.message);
+  process.exit(1);
+}
 const S = ctx.window.SITE;
-// Optional: a mutation script (for testing the checker) that edits S in place.
+if (!S) { console.log("错误：content.js 里没有 window.SITE = { ... }"); process.exit(1); }
+// 测试用：第二个参数是一段修改 S 的代码，用来验证检查器能不能发现问题
 if (process.argv[3]) new Function("S", process.argv[3])(S);
-const langs = S.meta.languages;
+
+const meta = S.meta || {};
+const langs = meta.languages || [];
 const errors = [];
+const warnings = [];
+const err = (m) => errors.push(m);
+const warn = (m) => warnings.push(m);
 
-if (langs.length > 3) errors.push(`meta.languages has ${langs.length} languages (max 3)`);
+if (!langs.length) err("meta.languages 为空");
+if (langs.length > 3) err(`meta.languages 有 ${langs.length} 种语言，最多 3 种`);
 
-// Every object whose keys are all language codes must cover every site language.
+// ---------- 多语言、占位内容、隐藏字段 ----------
+
 const LANG_RE = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/;
-function walk(node, path) {
+const isLangObj = (v) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 && Object.keys(v).every((k) => LANG_RE.test(k));
+
+function walk(node, p) {
   if (typeof node === "string") {
-    if (node.trim() === "" || /^(n\/a|暂无|tbd)$/i.test(node.trim())) errors.push(`${path}: placeholder value "${node}"`);
+    if (node.trim() === "" || /^(n\/a|暂无|tbd|todo|xxx)$/i.test(node.trim())) err(`${p}：占位内容 "${node}"`);
     return;
   }
-  if (Array.isArray(node)) return node.forEach((v, i) => walk(v, `${path}[${i}]`));
+  if (Array.isArray(node)) return node.forEach((v, i) => walk(v, `${p}[${i}]`));
   if (node && typeof node === "object") {
-    const keys = Object.keys(node);
-    if (path !== "ui" && path !== "basics.cv" && keys.length && keys.every(k => LANG_RE.test(k)) && keys.some(k => langs.includes(k))) {
-      for (const l of langs) if (!(l in node)) errors.push(`${path}: missing language "${l}"`);
+    if (p !== "ui" && p !== "basics.cv" && isLangObj(node) && Object.keys(node).some((k) => langs.includes(k))) {
+      for (const l of langs) if (!(l in node)) err(`${p}：缺少 "${l}" 的译文`);
     }
-    for (const k of keys) walk(node[k], path ? `${path}.${k}` : k);
+    if (node.show === false) err(`${p}：标了 show: false。content.js 是公开文件，隐藏的信息仍然能被下载到，不公开的内容请直接删掉`);
+    for (const k of Object.keys(node)) walk(node[k], p ? `${p}.${k}` : k);
   }
 }
 walk(S, "");
 
+// 需要翻译的字段：网站有多种语言时，写成普通字符串就只有一种语言
+const I18N = {
+  basics: ["label", "headline"],
+  work: ["position", "summary", "highlights[]"],
+  education: ["studyType", "area"],
+  projects: ["name", "description"],
+  stories: ["title", "standfirst", "role", "problem", "outcome", "actions[]", "media[].alt", "media[].caption", "metrics[].label"],
+  languages: ["language", "use"],
+  awards: ["title", "summary"],
+  publications: ["summary"],
+  quotes: ["text", "authorTitle"],
+  documents: ["title", "summary"],
+  about: ["text", "interests[]"],
+  contact: ["cta"],
+};
+function checkI18n(obj, field, where) {
+  const [head, ...rest] = field.split(".");
+  const isArr = head.endsWith("[]");
+  const key = isArr ? head.slice(0, -2) : head;
+  const v = obj && obj[key];
+  if (v == null) return;
+  const items = isArr ? (Array.isArray(v) ? v : []) : [v];
+  items.forEach((it, i) => {
+    const w = isArr ? `${where}.${key}[${i}]` : `${where}.${key}`;
+    if (rest.length) return checkI18n(it, rest.join("."), w);
+    if (typeof it === "string") err(`${w}：网站有 ${langs.length} 种语言，这里应该写成 { ${langs.map((l) => l + ": …").join(", ")} }`);
+  });
+}
+if (langs.length > 1) {
+  for (const [sec, fields] of Object.entries(I18N)) {
+    const val = S[sec];
+    if (!val) continue;
+    const entries = Array.isArray(val) ? val.map((x, i) => [x, `${sec}.${x && x.id ? x.id : i}`]) : [[val, sec]];
+    for (const [obj, where] of entries) for (const f of fields) checkI18n(obj, f, where);
+  }
+}
+
+// ---------- id 引用 ----------
+
 const ids = {};
 for (const sec of ["work", "education", "projects", "stories", "skills", "certificates", "awards", "publications", "quotes", "documents"]) {
-  ids[sec] = new Set((S[sec] || []).map(x => x.id));
+  ids[sec] = new Set((S[sec] || []).map((x) => x.id));
 }
 const parents = new Set([...ids.work, ...ids.education, ...ids.projects]);
-function ref(path, id, set, name) {
-  if (id && !set.has(id)) errors.push(`${path}: unknown ${name} id "${id}"`);
-}
+const ref = (p, id, set, name) => { if (id && !set.has(id)) err(`${p}：找不到 ${name} "${id}"`); };
+const needSources = (x, p) => { if (!x.sources || !x.sources.length) err(`${p}：没有 sources（来源）`); };
+
 for (const sec of ["work", "education", "projects"]) {
   for (const e of S[sec] || []) {
-    (e.stories || []).forEach(id => ref(`${sec}.${e.id}.stories`, id, ids.stories, "story"));
-    (e.skills || []).forEach(id => ref(`${sec}.${e.id}.skills`, id, ids.skills, "skill"));
-    (e.evidence || []).forEach(id => ref(`${sec}.${e.id}.evidence`, id, ids.documents, "document"));
-    if (e.thesis) ref(`${sec}.${e.id}.thesis.story`, e.thesis.story, ids.stories, "story");
-    if (!e.sources || !e.sources.length) errors.push(`${sec}.${e.id}: no sources`);
+    (e.stories || []).forEach((id) => ref(`${sec}.${e.id}.stories`, id, ids.stories, "故事"));
+    (e.skills || []).forEach((id) => ref(`${sec}.${e.id}.skills`, id, ids.skills, "技能"));
+    (e.evidence || []).forEach((id) => ref(`${sec}.${e.id}.evidence`, id, ids.documents, "文件"));
+    if (e.thesis) ref(`${sec}.${e.id}.thesis.story`, e.thesis.story, ids.stories, "故事");
+    needSources(e, `${sec}.${e.id}`);
   }
 }
 let featured = 0;
+const storyOwners = {};
 for (const s of S.stories || []) {
-  ref(`stories.${s.id}.parent`, s.parent, parents, "parent");
-  (s.skills || []).forEach(id => ref(`stories.${s.id}.skills`, id, ids.skills, "skill"));
-  (s.evidence || []).forEach(id => ref(`stories.${s.id}.evidence`, id, ids.documents, "document"));
-  (s.quotes || []).forEach(id => ref(`stories.${s.id}.quotes`, id, ids.quotes, "quote"));
-  (s.metrics || []).forEach((m, i) => { if (!m.sources || !m.sources.length) errors.push(`stories.${s.id}.metrics[${i}]: no sources`); });
-  (s.media || []).forEach((m, i) => { if (!m.caption) errors.push(`stories.${s.id}.media[${i}]: no caption`); });
-  if (!s.sources || !s.sources.length) errors.push(`stories.${s.id}: no sources`);
+  ref(`stories.${s.id}.parent`, s.parent, parents, "所属经历");
+  (s.skills || []).forEach((id) => ref(`stories.${s.id}.skills`, id, ids.skills, "技能"));
+  (s.evidence || []).forEach((id) => ref(`stories.${s.id}.evidence`, id, ids.documents, "文件"));
+  (s.quotes || []).forEach((id) => ref(`stories.${s.id}.quotes`, id, ids.quotes, "引用"));
+  (s.metrics || []).forEach((m, i) => { if (!m.sources || !m.sources.length) err(`stories.${s.id}.metrics[${i}]：数字没有来源`); });
+  (s.media || []).forEach((m, i) => { if (!m.caption) err(`stories.${s.id}.media[${i}]：图片没有说明文字`); });
+  needSources(s, `stories.${s.id}`);
   if (s.featured) {
     featured++;
-    if (!(s.media || []).length && !(s.evidence || []).length) errors.push(`stories.${s.id}: featured but has no media or evidence`);
+    if (!(s.media || []).length && !(s.evidence || []).length) warn(`stories.${s.id}：精选故事既没有图片也没有证据，考虑不设为精选`);
   }
 }
-if ((S.stories || []).length && (featured < 2 || featured > 4)) errors.push(`${featured} featured stories (want 2–4)`);
-for (const c of S.certificates || []) { ref(`certificates.${c.id}.document`, c.document, ids.documents, "document"); if (!c.sources) errors.push(`certificates.${c.id}: no sources`); }
-for (const l of S.languages || []) ref(`languages.certificate`, l.certificate, ids.certificates, "certificate");
+if ((S.stories || []).length && featured === 0) warn("没有精选故事，首页会默认显示前 3 个故事");
+if (featured > 4) warn(`有 ${featured} 个精选故事，建议不超过 4 个`);
+// 同一个故事挂在两处会在时间线上出现两次
+for (const sec of ["work", "education", "projects"]) for (const e of S[sec] || []) for (const id of e.stories || []) (storyOwners[id] = storyOwners[id] || []).push(`${sec}.${e.id}`);
+for (const a of S.awards || []) if (a.story) (storyOwners[a.story] = storyOwners[a.story] || []).push(`awards.${a.id}`);
+for (const [id, owners] of Object.entries(storyOwners)) if (owners.length > 1) warn(`故事 "${id}" 同时挂在 ${owners.join("、")}，时间线上会出现两次`);
+
+for (const c of S.certificates || []) { ref(`certificates.${c.id}.document`, c.document, ids.documents, "文件"); needSources(c, `certificates.${c.id}`); }
+for (const a of S.awards || []) { ref(`awards.${a.id}.story`, a.story, ids.stories, "故事"); ref(`awards.${a.id}.document`, a.document, ids.documents, "文件"); }
+for (const p of S.publications || []) ref(`publications.${p.name && typeof p.name === "string" ? p.name : p.id}.story`, p.story, ids.stories, "故事");
+for (const l of S.languages || []) ref("languages.certificate", l.certificate, ids.certificates, "证书");
 for (const q of S.quotes || []) {
-  ref(`quotes.${q.id}.document`, q.document, ids.documents, "document");
-  if (!["yes", "pending", "no", "not-needed"].includes(q.consent)) errors.push(`quotes.${q.id}: bad consent "${q.consent}"`);
-  if (!q.sources) errors.push(`quotes.${q.id}: no sources`);
+  ref(`quotes.${q.id}.document`, q.document, ids.documents, "文件");
+  if (!["yes", "pending", "no", "not-needed"].includes(q.consent)) err(`quotes.${q.id}：consent 只能是 yes / pending / no / not-needed`);
+  needSources(q, `quotes.${q.id}`);
 }
 for (const d of S.documents || []) {
-  if (!["public", "summary", "on-request", "private"].includes(d.visibility)) errors.push(`documents.${d.id}: bad visibility`);
-  if (d.visibility !== "public" && d.file) errors.push(`documents.${d.id}: non-public document must not have a file`);
+  if (!["public", "summary", "on-request", "private"].includes(d.visibility)) err(`documents.${d.id}：visibility 只能是 public / summary / on-request / private`);
+  if (d.visibility !== "public" && d.file) err(`documents.${d.id}：不公开的文件不能写 file，原件也不要放进网站文件夹`);
 }
+for (const s of S.skills || []) if (typeof s.name !== "string" && !isLangObj(s.name)) err(`skills.${s.id}.name：应该是文字或多语言对象`);
 
-console.log(errors.length ? errors.join("\n") : "OK: no problems found");
+// ---------- 设置 ----------
+
+const SECTIONS = ["stories", "experience", "education", "publications", "skills", "documents", "about"];
+(meta.sections || []).forEach((x) => { if (!SECTIONS.includes(x)) err(`meta.sections 里的 "${x}" 不存在，可用：${SECTIONS.join(", ")}`); });
+if (meta.layout && !["compact", "editorial"].includes(meta.layout)) err(`meta.layout 只能是 compact 或 editorial`);
+const today = new Date().toISOString().slice(0, 7);
+const from = S.basics && S.basics.availability && S.basics.availability.from;
+if (from && from < today) warn(`basics.availability.from 是 ${from}，已经过去了。现在就能开始的话，删掉 from，在 note 里写"ab sofort / 随时"`);
+
+// ---------- 网站文件夹 ----------
+
+const isLocal = (u) => typeof u === "string" && u && !/^(https?:|mailto:|tel:|data:|#)/i.test(u);
+const referenced = new Set();
+function needFile(u, p) {
+  if (!isLocal(u)) return;
+  const clean = u.split(/[?#]/)[0];
+  referenced.add(path.normalize(clean));
+  if (!fs.existsSync(path.join(siteDir, clean))) err(`${p}：文件 "${u}" 不存在（相对于 ${path.basename(siteDir)}/）`);
+}
+const b = S.basics || {};
+needFile(b.image, "basics.image");
+if (b.cv) for (const [l, u] of Object.entries(b.cv)) needFile(u, `basics.cv.${l}`);
+for (const s of S.stories || []) (s.media || []).forEach((m, i) => { if ((m.type || "image") !== "link") needFile(m.src, `stories.${s.id}.media[${i}]`); });
+for (const d of S.documents || []) { needFile(d.file, `documents.${d.id}.file`); needFile(d.thumbnail, `documents.${d.id}.thumbnail`); }
+
+const indexHtml = path.join(siteDir, "index.html");
+if (fs.existsSync(indexHtml)) {
+  const html = fs.readFileSync(indexHtml, "utf8");
+  const m = html.match(/id="style-css"[^>]*href="assets\/styles\/([\w-]+)\.css"|href="assets\/styles\/([\w-]+)\.css"[^>]*id="style-css"/);
+  const linked = m && (m[1] || m[2]);
+  if (meta.style && linked && linked !== meta.style) err(`index.html 引用的风格是 ${linked}，content.js 的 meta.style 是 ${meta.style}，两处要一致`);
+  if (/Xiao Lin/.test(html) && b.name && b.name !== "Xiao Lin") err("index.html 里还是演示人物 Xiao Lin 的标题和描述，换成用户的");
+  if (/Persönliche Website · Personal website/.test(html)) warn("index.html 的标题和分享预览还是模板默认文字，建议换成用户的名字和一句话介绍");
+  const lang = (html.match(/<html[^>]*lang="([^"]+)"/) || [])[1];
+  if (lang && langs[0] && lang !== langs[0]) warn(`index.html 的 lang 是 "${lang}"，默认语言是 "${langs[0]}"`);
+}
+// 放在 img/ 和 docs/ 里却没被引用的文件：部署后同样能被下载
+for (const dir of ["assets/img", "assets/docs"]) {
+  const abs = path.join(siteDir, dir);
+  if (!fs.existsSync(abs)) continue;
+  for (const f of fs.readdirSync(abs)) {
+    if (f.startsWith(".")) continue;
+    const rel = path.normalize(path.join(dir, f));
+    if (!referenced.has(rel)) warn(`${rel} 没有被 content.js 用到，但部署后任何人都能下载。演示文件或不公开的文件请删掉`);
+  }
+}
+for (const f of fs.readdirSync(siteDir)) if (/^preview-.*\.html$/i.test(f)) warn(`${f} 是风格预览文件，选定风格后请删掉，不要发布`);
+for (const bad of ["_work", "我的简历网站"]) if (fs.existsSync(path.join(siteDir, bad))) err(`网站文件夹里有 ${bad}/，里面是工作记录，部署时会被公开。把它移出 ${path.basename(siteDir)}/`);
+
+// ---------- 输出 ----------
+
+if (errors.length) console.log(`错误（${errors.length}）：\n` + errors.map((e) => "  - " + e).join("\n"));
+if (warnings.length) console.log(`提醒（${warnings.length}）：\n` + warnings.map((w) => "  - " + w).join("\n"));
+if (!errors.length && !warnings.length) console.log("OK：没有发现问题");
+else if (!errors.length) console.log("没有错误，请看一下上面的提醒。");
 process.exit(errors.length ? 1 : 0);

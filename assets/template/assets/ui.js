@@ -90,7 +90,15 @@ window.UI = {
     doc_degree: "Abschlusszeugnis",
     doc_award: "Urkunde",
     "doc_work-sample": "Arbeitsprobe",
-    doc_publication: "Publikation"
+    doc_publication: "Publikation",
+    type_Vollzeit: "Vollzeit",
+    type_Teilzeit: "Teilzeit",
+    type_Werkstudent: "Werkstudent:in",
+    type_Praktikum: "Praktikum",
+    type_HiWi: "Wiss. Hilfskraft",
+    type_Abschlussarbeit: "Abschlussarbeit",
+    type_Freelance: "Freiberuflich",
+    type_Ehrenamt: "Ehrenamt"
   },
   en: {
     skip: "Skip to content",
@@ -179,7 +187,15 @@ window.UI = {
     doc_degree: "Degree certificate",
     doc_award: "Award",
     "doc_work-sample": "Work sample",
-    doc_publication: "Publication"
+    doc_publication: "Publication",
+    type_Vollzeit: "Full-time",
+    type_Teilzeit: "Part-time",
+    type_Werkstudent: "Working student",
+    type_Praktikum: "Internship",
+    type_HiWi: "Research assistant",
+    type_Abschlussarbeit: "Thesis",
+    type_Freelance: "Freelance",
+    type_Ehrenamt: "Volunteer"
   },
   zh: {
     skip: "跳到正文",
@@ -268,6 +284,14 @@ window.UI = {
     doc_degree: "学位证明",
     doc_award: "获奖证书",
     "doc_work-sample": "作品",
-    doc_publication: "论文"
+    doc_publication: "论文",
+    type_Vollzeit: "全职",
+    type_Teilzeit: "兼职",
+    type_Werkstudent: "Werkstudent（在读学生工）",
+    type_Praktikum: "实习",
+    type_HiWi: "科研助理",
+    type_Abschlussarbeit: "毕业论文",
+    type_Freelance: "自由职业",
+    type_Ehrenamt: "志愿"
   }
 };

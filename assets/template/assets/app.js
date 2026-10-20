@@ -77,6 +77,17 @@
     var b = end ? fmtDate(end) : expected ? U("expected_until", { date: fmtDate(expected) }) : U("present");
     return start ? fmtDate(start) + " – " + b : b;
   }
+  function typeLabel(t) {
+    if (!t) return "";
+    if (typeof t === "object") return T(t);
+    var label = U("type_" + t);
+    return label === "type_" + t ? t : label;
+  }
+  function storyPeriod(p) {
+    if (!p) return "";
+    if (p.date || (p.start && p.start === p.end)) return fmtDate(p.date || p.start);
+    return period(p.start, p.end);
+  }
   function langName(code) {
     try { return new Intl.DisplayNames([code], { type: "language" }).of(code); } catch (e) { return code; }
   }
@@ -157,7 +168,7 @@
     var items = (ids || []).map(function (id) { return get("skills", id); }).filter(Boolean);
     if (!items.length) return "";
     return html`<ul class="tags">${items.map(function (s) {
-      return html`<li><a class="tag" href="${href("skills", s.id)}">${s.name}</a></li>`;
+      return html`<li><a class="tag" href="${href("skills", s.id)}">${T(s.name)}</a></li>`;
     })}</ul>`;
   }
 
@@ -246,7 +257,7 @@
     var facts = [];
     if (b.location && b.location.city) facts.push({ k: U("location"), v: b.location.city });
     if (a) {
-      var av = [a.type, a.from ? U("available_from", { date: fmtDate(a.from) }) : "", T(a.hours)].filter(Boolean).join(" · ");
+      var av = [typeLabel(a.type), a.from ? U("available_from", { date: fmtDate(a.from) }) : "", T(a.hours)].filter(Boolean).join(" · ");
       if (av) facts.push({ k: U("available"), v: av });
     }
     var langs = list("languages").map(function (l) {
@@ -318,7 +329,7 @@
         <p class="tl-date">${period(it.startDate, it.endDate)}</p>
         <div class="tl-body">
           <h3 class="tl-title">${T(it.position)} <span class="tl-org">· ${it.url ? html`<a href="${safeUrl(it.url)}" target="_blank" rel="noopener">${it.name}</a>` : it.name}</span></h3>
-          <p class="tl-meta">${[it.type, it.location].filter(Boolean).join(" · ")}</p>
+          <p class="tl-meta">${[typeLabel(it.type), it.location].filter(Boolean).join(" · ")}</p>
           ${it.summary ? html`<p>${T(it.summary)}</p>` : ""}
           ${(it.highlights || []).length ? html`<ul class="tl-highlights">${it.highlights.map(function (h) { return html`<li>${T(h)}</li>`; })}</ul>` : ""}
           ${storyLinks(it.stories)}
@@ -326,7 +337,7 @@
       </li>`;
     }
     if (e.kind === "education") {
-      var score = it.score && it.score.show ? it.score.value : "";
+      var score = it.score && it.score.show !== false ? it.score.value : "";
       return html`<li class="tl-item tl-education">
         <p class="tl-date">${period(it.startDate, it.endDate, it.expectedEnd)}</p>
         <div class="tl-body">
@@ -402,7 +413,7 @@
         <h3 class="skill-cat">${label === "cat_" + cat ? cat : label}</h3>
         <ul class="tags">${groups[cat].map(function (s) {
           var n = skillUses(s.id).stories.length;
-          return html`<li><a class="tag" href="${href("skills", s.id)}">${s.name}${n ? html` <span class="tag-count" title="${U("stories_count", { n: n })}">${n}</span>` : ""}</a></li>`;
+          return html`<li><a class="tag" href="${href("skills", s.id)}">${T(s.name)}${n ? html` <span class="tag-count" title="${U("stories_count", { n: n })}">${n}</span>` : ""}</a></li>`;
         })}</ul>
       </div>`;
     })}</div>`;
@@ -493,7 +504,7 @@
     var b = SITE.basics || {};
     var c = SITE.contact || {};
     var email = b.email && b.email.show !== false && c.showEmail !== false ? b.email.value : "";
-    var phone = b.phone && b.phone.show ? b.phone.value : "";
+    var phone = b.phone && b.phone.show !== false ? b.phone.value : "";
     return html`<section class="section section-contact" id="contact" aria-labelledby="contact-title">
       <div class="wrap">
         ${sectionTitle("contact", U("contact"))}
@@ -579,7 +590,7 @@
         <p class="kicker">${storyKicker(s)}</p>
         <h1 class="story-title">${T(s.title)}</h1>
         ${s.standfirst ? html`<p class="story-standfirst">${T(s.standfirst)}</p>` : ""}
-        <p class="story-meta">${[T(s.role), s.period ? period(s.period.start, s.period.end) : "", p ? orgName(p) : ""].filter(Boolean).join(" · ")}</p>
+        <p class="story-meta">${[T(s.role), storyPeriod(s.period), p ? orgName(p) : ""].filter(Boolean).join(" · ")}</p>
         ${metricsList(s.metrics, 3)}
       </div>
       ${heroIdx >= 0 ? html`<div class="wrap wrap-wide">${mediaFigure(media[heroIdx], group, true)}</div>` : ""}
@@ -612,7 +623,7 @@
     return html`<section class="section section-skill">
       <div class="wrap">
         <p class="back"><a href="${href("skills")}"><span aria-hidden="true" class="arrow arrow-back">←</span> ${U("all_skills")}</a></p>
-        <h1 class="section-title">${U("stories_with_skill", { name: s.name })}</h1>
+        <h1 class="section-title">${U("stories_with_skill", { name: T(s.name) })}</h1>
         ${uses.stories.length ? html`<div class="cards cards-featured">${uses.stories.map(function (x) { return storyCard(x); })}</div>` : ""}
         ${uses.entries.length ? html`<h2 class="subhead">${U("used_in")}</h2><ul class="plain-list">${uses.entries.map(function (w) {
           return html`<li><strong>${w.position ? T(w.position) : T(w.name)}</strong>${w.position ? html` · ${w.name}` : ""} <span class="muted">${period(w.startDate, w.endDate)}</span></li>`;
@@ -624,10 +635,10 @@
   function cvPage() {
     var b = SITE.basics || {};
     var email = b.email && b.email.show !== false ? b.email.value : "";
-    var phone = b.phone && b.phone.show ? b.phone.value : "";
+    var phone = b.phone && b.phone.show !== false ? b.phone.value : "";
     var contact = [b.location && b.location.city, email, phone].concat((b.profiles || []).map(function (p) { return p.url ? p.url.replace(/^https?:\/\/(www\.)?/, "") : ""; })).filter(Boolean);
     var groups = {};
-    list("skills").forEach(function (s) { (groups[s.category || "other"] = groups[s.category || "other"] || []).push(s.name); });
+    list("skills").forEach(function (s) { (groups[s.category || "other"] = groups[s.category || "other"] || []).push(T(s.name)); });
     return html`<section class="cv">
       <div class="wrap cv-sheet">
         <div class="cv-tools no-print">
@@ -645,7 +656,7 @@
             ${(w.highlights || []).length ? html`<ul>${w.highlights.map(function (h) { return html`<li>${T(h)}</li>`; })}</ul>` : ""}</div></div>`;
         })}` : ""}
         ${list("education").length ? html`<h2>${U("education")}</h2>${list("education").map(function (e) {
-          return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${e.institution}${e.score && e.score.show ? " · " + U("grade") + " " + e.score.value : ""}</p>
+          return html`<div class="cv-entry"><p class="cv-when">${period(e.startDate, e.endDate, e.expectedEnd)}</p><div><p><strong>${[T(e.studyType), T(e.area)].filter(Boolean).join(", ")}</strong> · ${e.institution}${e.score && e.score.show !== false ? " · " + U("grade") + " " + e.score.value : ""}</p>
             ${e.thesis ? html`<p class="muted">${U("thesis")}: ${T(e.thesis.title)}</p>` : ""}</div></div>`;
         })}` : ""}
         ${Object.keys(groups).length ? html`<h2>${U("skills")}</h2><dl class="cv-dl">${Object.keys(groups).map(function (cat) {
@@ -711,8 +722,10 @@
   // ---------- 风格与主题 ----------
 
   var styleLink = document.getElementById("style-css");
-  var currentStyle = paramOr("style", STYLES, META.style && STYLES.indexOf(META.style) >= 0 ? META.style : null) ||
-    (styleLink && (styleLink.getAttribute("href").match(/styles\/([\w-]+)\.css/) || [])[1]) || "swiss-minimal";
+  // 优先级：网址里的 ?style= > index.html 里引用的风格文件（预览文件靠这个区分）> content.js 的 meta.style
+  var linkedStyle = styleLink && (styleLink.getAttribute("href").match(/styles\/([\w-]+)\.css/) || [])[1];
+  var currentStyle = paramOr("style", STYLES, null) || linkedStyle ||
+    (META.style && STYLES.indexOf(META.style) >= 0 ? META.style : null) || "swiss-minimal";
   if (styleLink && styleLink.getAttribute("href") !== "assets/styles/" + currentStyle + ".css") {
     styleLink.setAttribute("href", "assets/styles/" + currentStyle + ".css");
   }
@@ -824,6 +837,21 @@
   var navigatedInSite = false;
   window.addEventListener("hashchange", function () { navigatedInSite = true; render(); });
 
+  function setFavicon() {
+    if (META.favicon) return; // 用户自己提供了图标文件时不覆盖
+    var name = ((SITE.basics || {}).name || "").trim();
+    if (!name) return;
+    var words = name.split(/\s+/);
+    var initials = /[\u3400-\u9fff]/.test(name) ? name.charAt(0) : (words[0].charAt(0) + (words.length > 1 ? words[words.length - 1].charAt(0) : "")).toUpperCase();
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#111"/>' +
+      '<text x="32" y="42" font-family="Helvetica, Arial, sans-serif" font-size="' + (initials.length > 1 ? 28 : 34) + '" font-weight="700" fill="#fff" text-anchor="middle">' + esc(initials) + "</text></svg>";
+    var link = document.querySelector('link[rel="icon"]');
+    if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+    link.type = "image/svg+xml";
+    link.href = "data:image/svg+xml," + encodeURIComponent(svg);
+  }
+
   if (!app) return;
+  setFavicon();
   render();
 })();

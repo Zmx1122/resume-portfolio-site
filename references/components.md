@@ -33,15 +33,16 @@ site/
 
 ## 2. 生成网站的步骤
 
-1. 把 `assets/template/` 整个复制成 `site/`。
-2. 用整理好的内容覆盖 `site/content.js`。
-3. 删掉 `site/assets/img/` 和 `site/assets/docs/` 里的演示文件，放入用户的图片和**可以公开**的文件。文件名用英文小写和连字符，和 `content.js` 里的路径一致。
-4. 修改 `site/index.html` 里标了注释的几处：
+1. **只在 `site/` 还不存在时**，把 `assets/template/` 整个复制成 `我的简历网站/site/`。`site/` 已经存在就跳过这一步，否则会把用户的内容覆盖成演示内容。
+2. 删掉 `site/assets/img/` 和 `site/assets/docs/` 里的演示文件。
+3. 用整理好的内容覆盖 `site/content.js`。
+4. 放入用户的图片和**可以公开**的文件。文件名只用英文小写字母、数字和连字符，和 `content.js` 里的路径一致。图片宽度压缩到 1600px 以内。
+5. 修改 `site/index.html` 里标了注释的几处：
    - `<html lang="…">` 改成默认语言
-   - `<title>`、`description`、`og:title`、`og:description` 填默认语言的内容（姓名 – 一句话身份；定位语）
+   - `<title>`、`description`、`og:title`、`og:description` 填默认语言的内容（姓名 – 一句话身份；定位语）。网页打开后标题会自动换成 `content.js` 里的名字，这几处主要影响发链接时的预览
    - `id="style-css"` 那一行改成选定的风格文件，并和 `content.js` 里的 `meta.style` 保持一致
-5. 把 `assets/favicon.svg` 里的字母换成用户姓名的首字母。
-6. 在浏览器里打开 `site/index.html` 检查（见第 4 节）。
+6. 网站图标会自动用姓名首字母生成，不用改。想用自己的图标时，替换 `assets/favicon.svg` 并在 `content.js` 的 `meta` 里写 `favicon: true`。
+7. 运行 `node scripts/check_content.js site/content.js`，然后在浏览器里打开 `site/index.html` 检查（见第 4 节）。
 
 ## 3. 组件清单
 
@@ -71,7 +72,7 @@ site/
 ## 4. 预览和比较风格
 
 - **直接双击 `site/index.html`** 就能在浏览器里打开，不需要服务器。豆包的内置预览也是这样加载的。
-- **比较风格**：在网址后面加 `?style=风格名`，例如 `index.html?style=editorial`，不用改文件就能切换风格。阶段 6 做风格小样时，可以用这个方法给用户看同一份内容的三种风格。
+- **比较风格**：给用户看风格时，在 `site/` 里生成预览文件，做法见 `styles/index.md`"怎么做小样"。自己检查时，也可以在网址后面加 `?style=风格名`（例如 `index.html?style=editorial`），但不要让用户去改网址。
 - **比较布局**：加 `?layout=compact` 或 `?layout=editorial`。
 - **看某种语言**：在网址末尾加 `#/en/`、`#/zh/` 等。
 - **看手机效果**：浏览器开发者工具里切换到手机尺寸，或者直接在手机上打开部署后的链接。

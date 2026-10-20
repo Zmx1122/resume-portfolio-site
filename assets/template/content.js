@@ -27,8 +27,7 @@ window.SITE = {
       zh: "我把销售和运营数据做成团队真正会用的看板和预测。"
     },
     image: "assets/img/avatar.svg",
-    email: { value: "xiao.lin@example.com", show: true },
-    phone: { value: "+49 000 0000000", show: false },
+    email: { value: "xiao.lin@example.com" },
     location: { city: "München", countryCode: "DE" },
     profiles: [
       { network: "LinkedIn", url: "https://www.linkedin.com/in/example" },
@@ -90,7 +89,7 @@ window.SITE = {
       area: { de: "Data Science", en: "Data Science", zh: "数据科学" },
       startDate: "2024-10",
       expectedEnd: "2027-03",
-      score: { value: "1.7", scale: "DE", show: true },
+      score: { value: "1.7", scale: "DE" },
       courses: [
         { name: { de: "Maschinelles Lernen", en: "Machine Learning", zh: "机器学习" }, grade: "1.3", ects: 6 },
         { name: { de: "Zeitreihenanalyse", en: "Time Series Analysis", zh: "时间序列分析" }, grade: "1.7", ects: 6 }

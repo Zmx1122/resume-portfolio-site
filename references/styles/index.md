@@ -20,15 +20,16 @@
 
 ## 怎么做小样
 
-不用为每个风格单独做页面：内容整理好后，在网址后加 `?style=<风格 id>` 就能用同一份内容看不同风格，例如：
+用户的内容放进 `site/` 之后，用同一份内容生成三个预览文件，让用户双击打开对比：
 
-```
-site/index.html?style=swiss-minimal
-site/index.html?style=editorial
-site/index.html?style=bento
-```
+1. 复制 `site/index.html` 三次，分别命名为 `preview-1.html`、`preview-2.html`、`preview-3.html`（放在 `site/` 里，和 `index.html` 同一层）。
+2. 在每个文件里，把 `id="style-css"` 那一行的风格文件名换成要预览的风格，例如 `assets/styles/editorial.css`。
+3. 告诉用户三个文件的完整位置和对应的风格名称，请TA双击打开，看首页和一个故事页，回一个编号。能直接替用户打开文件或截图的话，直接发三张截图更省事。
+4. 用户选定后，**删掉三个预览文件**（它们不应该被发布），按 `components.md` 第 5 节把风格写进 `index.html` 和 `content.js`。
 
-给用户看首页第一屏和一个故事页就够了。用户选定后，按 `components.md` 第 5 节把风格写进 `index.html` 和 `content.js`。
+不要让用户自己在网址后面加参数（`?style=`），这对非技术用户太难。用户说"你定"或"跳过"，就用第一推荐。
+
+聊天模式下没法生成预览文件，用文字描述三种风格的样子，请用户选一个，或者用第一推荐。
 
 ## 用户想要微调
 
