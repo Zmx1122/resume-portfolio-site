@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+<rect width="1600" height="900" fill="#f4f5f7"/>
+<rect x="0" y="0" width="1600" height="72" fill="#1f2937"/>
+<text x="40" y="46" font-family="Helvetica, Arial, sans-serif" font-size="28" fill="#fff">Vertriebs-Dashboard · Demo-Daten</text>
+<rect x="40" y="112" width="480" height="150" rx="10" fill="#fff"/>
+<text x="68" y="166" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#6b7280">Umsatz</text>
+<text x="68" y="230" font-family="Helvetica, Arial, sans-serif" font-size="48" font-weight="700" fill="#111827">1,2 Mio €</text>
+<rect x="560" y="112" width="480" height="150" rx="10" fill="#fff"/>
+<text x="588" y="166" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#6b7280">Aufträge</text>
+<text x="588" y="230" font-family="Helvetica, Arial, sans-serif" font-size="48" font-weight="700" fill="#111827">3.418</text>
+<rect x="1080" y="112" width="480" height="150" rx="10" fill="#fff"/>
+<text x="1108" y="166" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#6b7280">Ø Marge</text>
+<text x="1108" y="230" font-family="Helvetica, Arial, sans-serif" font-size="48" font-weight="700" fill="#111827">23 %</text>
+<rect x="40" y="300" width="1000" height="560" rx="10" fill="#fff"/>
+<text x="68" y="350" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#6b7280">Umsatz nach Region</text>
+<rect x="90" y="659" width="70" height="161" rx="4" fill="#0f766e"/>
+<rect x="205" y="591" width="70" height="229" rx="4" fill="#0f766e"/>
+<rect x="320" y="703" width="70" height="117" rx="4" fill="#0f766e"/>
+<rect x="435" y="508" width="70" height="312" rx="4" fill="#0f766e"/>
+<rect x="550" y="570" width="70" height="250" rx="4" fill="#0f766e"/>
+<rect x="665" y="456" width="70" height="364" rx="4" fill="#0f766e"/>
+<rect x="780" y="534" width="70" height="286" rx="4" fill="#0f766e"/>
+<rect x="895" y="409" width="70" height="411" rx="4" fill="#0f766e"/>
+<rect x="1080" y="300" width="480" height="560" rx="10" fill="#fff"/>
+<text x="1108" y="350" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#6b7280">Top-Produkte</text>
+<rect x="1108" y="400" width="380" height="36" rx="4" fill="#99c9c3"/>
+<rect x="1108" y="472" width="332" height="36" rx="4" fill="#99c9c3"/>
+<rect x="1108" y="544" width="284" height="36" rx="4" fill="#99c9c3"/>
+<rect x="1108" y="616" width="236" height="36" rx="4" fill="#99c9c3"/>
+<rect x="1108" y="688" width="188" height="36" rx="4" fill="#99c9c3"/>
+<rect x="1108" y="760" width="140" height="36" rx="4" fill="#99c9c3"/>
+</svg>

@@ -1,0 +1,73 @@
+/* 报纸编辑风：衬线标题、细线分栏、报头式首页、故事页像一篇报道。适合内容丰富、喜欢讲故事的人（参考 ylkhayat.vercel.app）。 */
+
+:root {
+  --bg: #fbfaf6;
+  --surface: #f1eee6;
+  --text: #16130f;
+  --muted: #5f584e;
+  --line: #d9d3c7;
+  --accent: #8f1d1d;
+  --accent-text: #ffffff;
+  --link: #8f1d1d;
+  --font-head: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, "Songti SC", "Noto Serif SC", "STSong", "Noto Naskh Arabic", serif;
+  --font-body: Georgia, "Iowan Old Style", "Times New Roman", "Songti SC", "Noto Serif SC", "STSong", "Noto Naskh Arabic", serif;
+  --head-weight: 700;
+  --head-tracking: -0.005em;
+  --radius: 0;
+  --radius-small: 2px;
+  --kicker-tracking: 0.12em;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15130f; --surface: #1f1c17; --text: #ece7dc; --muted: #ada596; --line: #37322a;
+    --accent: #e58a7c; --accent-text: #15130f; --link: #e58a7c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15130f; --surface: #1f1c17; --text: #ece7dc; --muted: #ada596; --line: #37322a;
+  --accent: #e58a7c; --accent-text: #15130f; --link: #e58a7c; color-scheme: dark;
+}
+
+.kicker, .site-nav a, .lang-switch a, .fact dt, .btn, .badge, .tag, .tl-date, .card-more, .metric-label {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.brand { font-size: 1.25rem; font-style: italic; }
+
+/* 首页像报纸头版：居中报头，上下双线 */
+.hero { text-align: center; }
+.hero-inner { grid-template-columns: 1fr !important; justify-items: center; border-block: 3px double var(--text); padding-block: 32px; }
+.hero-name { font-size: clamp(2.6rem, 1.6rem + 5vw, 5.2rem); line-height: 1; }
+.hero-headline { margin-inline: auto; font-style: italic; }
+.facts { justify-content: center; }
+.actions { justify-content: center; }
+.avatar { width: 96px !important; height: 96px !important; filter: grayscale(0.6) contrast(1.05); }
+
+.section-title { text-align: center; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.18em; border-block: 1px solid var(--text); padding-block: 8px; }
+
+/* 卡片之间用竖线分栏，不用边框和圆角 */
+.cards-featured { gap: 0; }
+.card { border: 0; border-radius: 0; background: transparent; }
+.cards-featured .card { border-block-end: 1px solid var(--line); }
+@media (min-width: 720px) {
+  .cards-featured .card { border-block-end: 0; border-inline-start: 1px solid var(--line); }
+  .cards-featured .card:first-child { border-inline-start: 0; }
+}
+.card-body { padding: 20px; }
+.card-title { font-size: 1.45rem; line-height: 1.15; }
+.card-media { aspect-ratio: 3 / 2; margin: 20px 20px 0; }
+.card:hover .card-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.15em; }
+
+.story-head { text-align: center; }
+.story-title { font-size: clamp(2.1rem, 1.5rem + 3vw, 3.6rem); }
+.story-standfirst { font-style: italic; }
+.story-head .metrics { justify-content: center; }
+.story-body > h2:first-child + p::first-letter {
+  float: inline-start; font-family: var(--font-head); font-size: 3.4em; line-height: 0.85; padding-inline-end: 8px; padding-block-start: 4px; color: var(--accent);
+}
+:lang(zh) .story-body > h2:first-child + p::first-letter, :lang(ja) .story-body > h2:first-child + p::first-letter,
+:lang(ar) .story-body > h2:first-child + p::first-letter { float: none; font-size: inherit; padding: 0; color: inherit; }
+.prose h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.14em; font-family: system-ui, -apple-system, "Segoe UI", Arial, "PingFang SC", sans-serif; color: var(--muted); }
+.quote { border-inline-start: 0; padding: 0; text-align: center; }
+.quote blockquote { font-size: 1.45rem; font-style: italic; }
+.tl-item { border-block-start-style: dotted; }

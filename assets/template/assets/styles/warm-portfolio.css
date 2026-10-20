@@ -1,0 +1,55 @@
+/* 温暖作品集：米色纸感底色、衬线标题、大图、柔和圆角、陶土色强调。适合设计、传播、教育、人文社科方向。 */
+
+:root {
+  --bg: #faf6f0;
+  --surface: #f1e9dd;
+  --text: #2b2420;
+  --muted: #6c5f56;
+  --line: #e4d8c8;
+  --accent: #b9440f;
+  --accent-text: #ffffff;
+  --link: #b9440f;
+  --font-head: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Songti SC", "Noto Serif SC", "STSong", "Noto Naskh Arabic", serif;
+  --head-weight: 600;
+  --head-tracking: -0.01em;
+  --radius: 14px;
+  --radius-small: 8px;
+  --kicker-transform: none;
+  --kicker-tracking: 0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1c1714; --surface: #2a221d; --text: #f3ebe2; --muted: #c0b0a2; --line: #3b3029;
+    --accent: #fb923c; --accent-text: #1c1714; --link: #fdba74; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1c1714; --surface: #2a221d; --text: #f3ebe2; --muted: #c0b0a2; --line: #3b3029;
+  --accent: #fb923c; --accent-text: #1c1714; --link: #fdba74; color-scheme: dark;
+}
+
+.site-header { border-block-end-color: transparent; }
+.hero-name { font-size: clamp(2.4rem, 1.6rem + 3.6vw, 4.2rem); }
+.hero-headline { font-family: var(--font-head); font-size: clamp(1.35rem, 1.1rem + 1vw, 1.8rem); }
+.avatar { border-radius: 32px; }
+.kicker { color: var(--accent); font-weight: 600; }
+
+.card { background: var(--surface); border-color: transparent; }
+.card:hover { border-color: var(--accent); }
+.card-media { aspect-ratio: 4 / 3; }
+.card-title { font-size: 1.4rem; }
+.cards-compact .card { background: transparent; border-color: var(--line); }
+.metric-value { color: var(--accent); }
+
+.figure-btn { border-radius: var(--radius); }
+.gallery { gap: 0 24px; }
+.tag { background: var(--surface); border-color: transparent; }
+.tag:hover { border-color: var(--accent); }
+.tl-item { border-block-start-color: var(--line); }
+.quote { border-inline-start: 0; background: var(--surface); border-radius: var(--radius); padding: 24px 28px; }
+.quote blockquote { font-family: var(--font-head); font-size: 1.3rem; }
+.doc-link { background: var(--surface); border-color: transparent; }
+.doc-link:hover { border-color: var(--accent); }
+.btn { border-radius: 999px; }
+.contact-cta { font-family: var(--font-head); font-size: 1.7rem; }

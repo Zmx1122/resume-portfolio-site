@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- 生成网站时要改的地方：lang、title、description、og 标签、风格文件名。其余不用动。 -->
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Xiao Lin – M.Sc.-Student Data Science</title>
+  <meta name="description" content="Ich mache aus Vertriebs- und Betriebsdaten Dashboards und Prognosen, mit denen Teams wirklich arbeiten.">
+  <!-- 分享预览：发到 LinkedIn、邮件、微信时显示的标题、描述和图片 -->
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="Xiao Lin – M.Sc.-Student Data Science">
+  <meta property="og:description" content="Ich mache aus Vertriebs- und Betriebsdaten Dashboards und Prognosen, mit denen Teams wirklich arbeiten.">
+  <!-- 有分享图时取消下一行的注释，图片建议 1200×630。部署后最好改成完整网址，例如 https://xxx/assets/og.png -->
+  <!-- <meta property="og:image" content="assets/og.png"> -->
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/base.css">
+  <!-- 选定的风格：editorial / swiss-minimal / bento / terminal-dark / warm-portfolio / academic -->
+  <link rel="stylesheet" id="style-css" href="assets/styles/swiss-minimal.css">
+  <script>
+    // 尽早应用用户上次选择的浅色/深色，避免页面闪一下
+    try { var t = localStorage.getItem("theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <noscript><p style="padding:2rem">Bitte JavaScript aktivieren. / Please enable JavaScript. / 请启用 JavaScript。</p></noscript>
+
+  <dialog id="lightbox" class="lightbox">
+    <div class="lb-frame">
+      <button type="button" class="icon-btn lb-close" data-action="lb-close" aria-label="Close">×</button>
+      <button type="button" class="icon-btn lb-nav lb-prev" data-action="lb-prev" aria-label="Previous">‹</button>
+      <figure class="lb-figure">
+        <img class="lb-img" src="data:," alt="">
+        <figcaption><span class="lb-caption"></span> <span class="lb-count"></span></figcaption>
+      </figure>
+      <button type="button" class="icon-btn lb-nav lb-next" data-action="lb-next" aria-label="Next">›</button>
+    </div>
+  </dialog>
+
+  <dialog id="sheet" class="sheet">
+    <button type="button" class="icon-btn sheet-close" data-action="sheet-close" aria-label="Close">×</button>
+    <div class="sheet-content"></div>
+  </dialog>
+
+  <script src="content.js"></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

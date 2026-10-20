@@ -1,0 +1,50 @@
+/* 瑞士极简：无衬线、强网格、黑色粗线分隔、一个红色强调色。适合工程、咨询、数据、制造业方向。 */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f3f3f3;
+  --text: #111111;
+  --muted: #5c5c5c;
+  --line: #d9d9d9;
+  --accent: #d6001c;
+  --accent-text: #ffffff;
+  --link: #111111;
+  --font-body: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans Arabic", sans-serif;
+  --font-head: var(--font-body);
+  --head-weight: 700;
+  --head-tracking: -0.025em;
+  --radius: 0;
+  --radius-small: 0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0e0e; --surface: #1a1a1a; --text: #f2f2f2; --muted: #a3a3a3; --line: #2e2e2e;
+    --accent: #ff4757; --accent-text: #0e0e0e; --link: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e0e; --surface: #1a1a1a; --text: #f2f2f2; --muted: #a3a3a3; --line: #2e2e2e;
+  --accent: #ff4757; --accent-text: #0e0e0e; --link: #f2f2f2; color-scheme: dark;
+}
+
+.site-header { border-block-end: 2px solid var(--text); }
+.hero-name { font-size: clamp(2.6rem, 1.6rem + 5vw, 5rem); line-height: 0.95; letter-spacing: -0.04em; }
+.hero-headline { font-weight: 500; }
+.avatar { border-radius: 0; filter: grayscale(1); }
+.section-title { border-block-start: 2px solid var(--text); padding-block-start: 12px; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.08em; }
+:lang(zh) .section-title, :lang(ja) .section-title { letter-spacing: 0.15em; }
+.card { border: 0; border-block-start: 1px solid var(--text); }
+.card:hover { border-color: var(--accent); }
+.card-body { padding-inline: 0; }
+.card-media { margin-block-start: 16px; }
+.card-title { font-size: 1.35rem; letter-spacing: -0.02em; }
+.card-more { color: var(--accent); }
+.metric-value { font-size: 2rem; letter-spacing: -0.03em; }
+.tag { border-radius: 0; }
+.tag:hover { border-color: var(--accent); color: var(--accent); }
+.tl-item { border-block-start-color: var(--text); }
+.tl-date { font-weight: 700; color: var(--text); }
+.quote { border-inline-start-width: 4px; }
+a:hover { color: var(--accent); }
+.btn-primary:hover { filter: none; background: var(--text); border-color: var(--text); color: var(--bg); }

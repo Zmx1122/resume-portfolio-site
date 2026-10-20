@@ -1,0 +1,6 @@
+.DS_Store
+Thumbs.db
+# 用这个 skill 生成网站时产生的个人文件，不要提交到公开仓库
+_work/
+site/
+我的简历网站/

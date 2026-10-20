@@ -1,0 +1,50 @@
+/* 暗色科技：默认深色，标题和标签用等宽字体，绿色强调。适合软件开发、数据工程、安全、DevOps 方向。
+   这个风格默认就是深色；用户切到浅色时，用的是一套"纸面终端"配色。
+   第二个选择器是为了压过 base.css 里系统深色模式的规则。 */
+
+:root, :root:not([data-theme="light"]) {
+  --bg: #0c0f0b;
+  --surface: #141a12;
+  --text: #dce5d5;
+  --muted: #8d9c86;
+  --line: #263021;
+  --accent: #4ade80;
+  --accent-text: #0c0f0b;
+  --link: #4ade80;
+  --font-head: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", "PingFang SC", "Microsoft YaHei", monospace;
+  --head-weight: 600;
+  --head-tracking: 0;
+  --radius: 4px;
+  --radius-small: 2px;
+  --kicker-transform: none;
+  --kicker-tracking: 0;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f6f6f1; --surface: #ebebe3; --text: #1b1f1a; --muted: #5a6356; --line: #d3d6cb;
+  --accent: #0a7a3d; --accent-text: #ffffff; --link: #0a7a3d; color-scheme: light;
+}
+
+.kicker, .site-nav a, .lang-switch a, .brand, .tag, .badge, .btn, .tl-date, .fact dt, .metric-value, .card-more { font-family: var(--font-head); }
+.kicker { color: var(--accent); }
+.kicker::before { content: "// "; opacity: 0.7; }
+.brand::before { content: "~/"; color: var(--accent); }
+.hero-name::after { content: "_"; color: var(--accent); }
+.section-title::before, .prose h2::before { content: "$ "; color: var(--accent); }
+.avatar { border-radius: var(--radius); outline: 1px solid var(--line); outline-offset: 4px; }
+
+.card { background: var(--surface); }
+.card:hover { border-color: var(--accent); }
+.card-media { border-block-end: var(--border); }
+.card-more { color: var(--accent); }
+.tag { border-radius: var(--radius-small); background: transparent; }
+.tag::before { content: "#"; color: var(--accent); }
+.tag:hover { border-color: var(--accent); }
+.metric-value { color: var(--accent); }
+.tl-item { border-block-start-style: dashed; }
+.doc-link { background: var(--surface); }
+.doc-link:hover { border-color: var(--accent); }
+.quote { border-inline-start-style: dashed; }
+.btn { border-radius: var(--radius-small); }
+.btn-primary:hover { filter: brightness(1.1); }
+::selection { background: var(--accent); color: var(--accent-text); }

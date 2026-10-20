@@ -1,0 +1,57 @@
+/* 学术简约：窄栏、衬线正文、蓝色下划线链接、几乎没有装饰，像大学教席的个人主页。适合读博、科研岗、研究型实习。 */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f5f6f8;
+  --text: #1a1d21;
+  --muted: #555b63;
+  --line: #e1e4e8;
+  --accent: #1d4ed8;
+  --accent-text: #ffffff;
+  --link: #1d4ed8;
+  --font-body: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, "Songti SC", "Noto Serif SC", "STSong", "Noto Naskh Arabic", serif;
+  --font-head: var(--font-body);
+  --head-weight: 600;
+  --head-tracking: 0;
+  --radius: 0;
+  --radius-small: 2px;
+  --kicker-transform: none;
+  --kicker-tracking: 0;
+  --max: 880px;
+  --section-gap: 56px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418; --surface: #1a1e24; --text: #e6e8eb; --muted: #a2a9b3; --line: #2a3038;
+    --accent: #93c5fd; --accent-text: #111418; --link: #93c5fd; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --surface: #1a1e24; --text: #e6e8eb; --muted: #a2a9b3; --line: #2a3038;
+  --accent: #93c5fd; --accent-text: #111418; --link: #93c5fd; color-scheme: dark;
+}
+
+.hero { padding-block-start: 48px; }
+.hero-name { font-size: clamp(2rem, 1.6rem + 1.6vw, 2.6rem); }
+.hero-headline { font-size: 1.2rem; max-width: none; }
+.avatar { border-radius: 4px; width: 120px !important; height: 150px !important; }
+.section-title { font-size: 1.4rem; border-block-end: var(--border); padding-block-end: 6px; }
+.kicker { font-style: italic; }
+
+/* 卡片变成列表：没有边框和配图，像论文列表一样一条一条排 */
+.cards { display: block; }
+.card { border: 0; border-block-end: var(--border); border-radius: 0; background: transparent; }
+.card:hover { border-color: var(--line); }
+.card-media { display: none; }
+.card-body { padding: 16px 0; }
+.card-title { font-size: 1.15rem; color: var(--link); }
+.card:hover .card-title { text-decoration: underline; }
+.card-more { display: none; }
+.metric-value { font-size: 1.15rem; }
+
+.tag { border-radius: var(--radius-small); min-height: 32px; }
+.btn { border-radius: var(--radius-small); }
+.quote { border-inline-start-width: 2px; border-inline-start-color: var(--line); }
+.doc-link { border-radius: var(--radius-small); }
+@media (min-width: 720px) { .tl-item { grid-template-columns: 170px 1fr; } }
