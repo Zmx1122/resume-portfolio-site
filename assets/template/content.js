@@ -110,6 +110,17 @@ window.SITE = {
 
   projects: [],
 
+  journey: [
+    { name: "Beispiel-Universität", place: { de: "China", en: "China", zh: "中国" }, years: "2020–2024", label: { de: "Bachelor", en: "Bachelor's", zh: "本科" } },
+    { name: "TH Beispielstadt", place: { de: "Beispielstadt", en: "Beispielstadt", zh: "德国 · 示例市" }, years: "2024–", label: { de: "Master", en: "Master's", zh: "硕士" } }
+  ],
+
+  milestones: [
+    { date: "2024-04", title: { de: "Werkstudent bei Muster GmbH", en: "Working student at Muster GmbH", zh: "在 Muster GmbH 做 Werkstudent" }, story: "muster-dashboard" },
+    { date: "2024-10", title: { de: "Master in Data Science", en: "Master's in data science", zh: "开始数据科学硕士" } },
+    { date: "2026-04", title: { de: "Masterarbeit gestartet", en: "Started master's thesis", zh: "开始写硕士论文" }, story: "thesis-forecast" }
+  ],
+
   stories: [
     {
       id: "muster-dashboard",

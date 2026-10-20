@@ -116,7 +116,7 @@ ui: {
 | `location` | `{ city, countryCode }`，例如 `{ city: "München", countryCode: "DE" }` |
 | `profiles` | `[{ network: "LinkedIn", url }]`，GitHub、个人博客等同理 |
 | `availability` | `{ type: "Werkstudent", from: "2027-04", hours: 译, note: 译 }`，首页快速信息用 |
-| `cv` | 可下载的 PDF 简历，按语言给：`{ de: "assets/docs/cv-de.pdf", en: "..." }`。**不需要每种语言都有**：当前语言没有对应简历时，页面提供默认语言的版本。没有就不写 |
+| `cv` | 可下载的 PDF 简历，按语言给：`{ de: "assets/docs/cv-de.pdf", en: "..." }`，只在"速览"页提供下载。**不需要每种语言都有**：当前语言没有对应简历时，页面提供默认语言的版本。用户的原始简历里有电话、住址时不要直接用，可以把"速览"页打印成 PDF（见 `components.md`）。没有就不写 |
 
 ### work：工作经历（同 JSON Resume，增加几个字段）
 
@@ -221,7 +221,38 @@ ui: {
 
 ### publications：论文与发表
 
-同 JSON Resume（`name`、`publisher`、`releaseDate`、`url`、`summary` 译），另加 `story`、`sources`。
+在 JSON Resume 的基础上（`name` 译、`publisher` 可译、`releaseDate`、`url`、`summary` 译）增加：
+
+| 字段 | 说明 |
+|---|---|
+| `url` | 论文链接，DOI 链接优先。题目、作者、出版信息要从论文本身、DOI 页面、出版社或 Google Scholar 核对，不要从照片或幻灯片推断 |
+| `authors` | 作者列表，例如 `"Anna Beispiel, Mei Chen, …"` |
+| `role` | 译。用户的作者身份和实际贡献，例如 `{ de: "Zweitautorin · Implementierung & Manuskript", en: "Second author · implementation & manuscript", zh: "第二作者 · 负责实现与手稿" }`。显示为标签 |
+| `image` | 论文首页截图，用作卡片封面（可选） |
+| `story` | 所属故事的 id。故事页会列出所有指向它的论文 |
+| `sources` | |
+
+### milestones：里程碑（可选）
+
+首页上按时间排列的"一路升级"路径。每一项：
+
+```js
+{ date: "2025-04", title: 译, text: 译, story: "first-job" }
+```
+
+- `date` 写 `"YYYY"` 或 `"YYYY-MM"`，用于排序和显示；只想显示年份时加 `label: { de: "2025", … }`
+- `story` 可选，填了以后标题可以点进对应的故事
+- 5–8 个节点最合适；挑真正的转折点（毕业、换城市、第一篇论文、获奖、换工作），不要把所有经历都放上去
+
+### journey：路线小地图（可选）
+
+首页右侧的 S 形路线，每一站一个红色图钉，按经历先后排列，至少两站：
+
+```js
+{ name: "TU Darmstadt", place: { de: "Darmstadt", en: "Darmstadt", zh: "德国 · 达姆施塔特" }, years: "2020–2022", label: { de: "Master", en: "Master's", zh: "硕士" } }
+```
+
+`name` 不翻译（学校、公司名），`place` 和 `label` 要翻译。4–5 站效果最好。
 
 ### quotes：引用（推荐语、工作证明摘录）
 
@@ -251,6 +282,10 @@ ui: {
 | `summary` | 译。`summary` 和 `on-request` 的文件在卡片上显示这段话 |
 
 `private` 的文件不出现在网站上；保留在 `content.js` 里，只是为了让证据关系完整。**`private` 和 `summary` 的原件不要复制进 `site/` 文件夹**，因为文件一旦上传到部署平台，知道路径的人就能下载。
+
+### 教育的荣誉
+
+`education` 的每一项可以加 `honors`（每一项译），显示在教育条目下，例如奖学金、优秀毕业论文、志愿者表彰、学生组织职务。
 
 ### about：关于我
 

@@ -5,6 +5,11 @@
 window.UI = {
   de: {
     skip: "Zum Inhalt springen",
+    milestones: "Mein Weg",
+    journey: "Stationen",
+    honors: "Auszeichnungen",
+    cat_ai: "KI & LLM-Agenten",
+    cat_automation: "Automatisierung",
     nav_label: "Hauptnavigation",
     nav_home: "Start",
     nav_experience: "Werdegang",
@@ -102,6 +107,11 @@ window.UI = {
   },
   en: {
     skip: "Skip to content",
+    milestones: "My path",
+    journey: "Where I've been",
+    honors: "Honours",
+    cat_ai: "AI & LLM agents",
+    cat_automation: "Automation",
     nav_label: "Main navigation",
     nav_home: "Home",
     nav_experience: "Experience",
@@ -199,6 +209,11 @@ window.UI = {
   },
   zh: {
     skip: "跳到正文",
+    milestones: "一路升级",
+    journey: "我的路线",
+    honors: "荣誉",
+    cat_ai: "AI 与 LLM 智能体",
+    cat_automation: "自动化",
     nav_label: "主导航",
     nav_home: "首页",
     nav_experience: "经历",

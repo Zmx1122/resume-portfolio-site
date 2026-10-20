@@ -51,7 +51,11 @@ site/
 | 组件 | 出现在 | 显示的内容 | 数据来源 |
 |---|---|---|---|
 | 页头 | 每页 | 姓名、导航、语言切换、深色模式按钮 | `basics.name`、`meta.languages`；导航只列出有内容的页面 |
-| 第一屏 | 首页 | 头像、姓名、身份、定位语、快速信息、按钮（联系、下载简历、速览） | `basics` |
+| 第一屏 | 首页 | 头像、姓名、身份、定位语、快速信息、按钮（联系、速览） | `basics` |
+| 路线小地图 | 首页第一屏右侧（手机上在下方） | S 形路线和红色图钉，每站显示名称、地点、年份、身份 | `journey`（至少两站才显示） |
+| 里程碑路径 | 首页第一屏下方 | 按时间排列的节点，可以点进对应故事 | `milestones` |
+| 论文卡片 | 发表版块 | 封面、作者身份标签、题目链接、作者、出处 | `publications` |
+| 故事页的论文列表 | 故事页 | 所有 `story` 指向这个故事的论文，带作者身份标签 | `publications` |
 | 故事卡片 | 首页、技能筛选页 | 配图、所属机构和类型、标题、导语、最多 2 个关键数字 | `stories` |
 | 时间线 | 经历版块或经历页 | 时间、职位或学位、机构、要点、相关故事链接 | `work`、`education`、`awards` |
 | 技能 | 技能版块或技能页 | 按类别分组的技能标签，数字表示出现在几个故事里 | `skills` + 自动统计 |
@@ -64,7 +68,7 @@ site/
 | 引用 | 故事页、关于我 | 引用文字、作者、身份 | `quotes`；只显示 `consent` 为 `yes` 或 `not-needed` 的 |
 | 关于我 | 关于我版块或页面 | 文字、兴趣、推荐语 | `about`、`quotes` |
 | 联系 | 首页底部 | 邀请语、邮箱、电话（如果公开）、个人主页链接 | `contact`、`basics` |
-| 速览 | `#/<语言>/cv` | 一页纸简历，带"打印 / 存为 PDF"按钮 | 自动从各版块汇总 |
+| 速览 | `#/<语言>/cv` | 一页纸简历，带"下载简历 PDF"（如果有 `basics.cv`）和"打印 / 存为 PDF"按钮。这是唯一提供简历下载的地方 | 自动从各版块汇总 |
 | 404 | 网址写错时 | 提示和回首页的按钮 | — |
 
 布局（紧凑型或编辑型）和首页版块顺序由 `meta.layout` 和 `meta.sections` 控制，见 `information-architecture.md`。
@@ -90,6 +94,17 @@ site/
 | 导航或按钮文字不满意 | `content.js` 的 `ui` 里覆盖对应的键，不要改 `ui.js` |
 | 头像改成圆形或方形 | 风格文件里 `.avatar` 的 `border-radius` |
 | 想要模板没有的新版块 | 先问清楚要放什么。大多数需求可以用现有组件表达（比如"志愿经历"用 `work` 加 `type: "Ehrenamt"`）。确实需要新组件时，在 `app.js` 里仿照现有版块添加，并在 `base.css` 里加样式 |
+
+## 从"速览"页生成简历 PDF
+
+用户的原始简历里有电话、住址等不公开信息时，可以把网站的"速览"页打印成 PDF，内容和网站一致。电脑上有 Chrome 时：
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --no-pdf-header-footer \
+  --virtual-time-budget=6000 --print-to-pdf=site/assets/docs/cv-en.pdf "file:///…/site/index.html#/en/cv"
+```
+
+（Windows 上 Chrome 通常在 `C:\Program Files\Google\Chrome\Application\chrome.exe`。）每种语言各生成一份，写进 `basics.cv`，然后运行检查脚本：它会读 PDF 里的文字，确认没有电话等信息。
 
 ## 6. 不要做的事
 

@@ -1,5 +1,6 @@
-// 用法：node scripts/publish_github_pages.js <网站文件夹> [--repo 仓库名]
-// 例如：node scripts/publish_github_pages.js 我的简历网站/site
+// 用法：node scripts/publish_github_pages.js <网站文件夹> [--repo 仓库名] [--account GitHub用户名]
+// 例如：node scripts/publish_github_pages.js 我的简历网站/site --account zmx1122
+// 电脑上登录了多个 GitHub 账号时，用 --account 锁定发布到哪个账号；不一致就停止。
 //
 // 把网站文件夹发布到 GitHub Pages，最后打印公开网址。需要电脑上装好 git 和 gh（GitHub 命令行工具），
 // 并且用户已经在终端里运行过一次 `gh auth login`。
@@ -55,8 +56,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {
   const args = process.argv.slice(2);
-  const siteArg = args.find((a) => !a.startsWith("--"));
   const repoFlag = args.indexOf("--repo");
+  const accountFlag = args.indexOf("--account");
+  const wantAccount = accountFlag >= 0 ? (args[accountFlag + 1] || "").toLowerCase() : null;
+  const flagValues = new Set([repoFlag, accountFlag].filter((i) => i >= 0).map((i) => i + 1));
+  const siteArg = args.find((a, i) => !a.startsWith("--") && !flagValues.has(i));
   if (!siteArg) fail("请给出网站文件夹，例如：node scripts/publish_github_pages.js 我的简历网站/site", 2);
   const siteDir = path.resolve(siteArg);
   if (!fs.existsSync(path.join(siteDir, "index.html"))) fail(`${siteDir} 里没有 index.html。要发布的是 site 文件夹本身。`, 2);
@@ -76,6 +80,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // 3. 账号和仓库
   const [login, id] = must("gh", ["api", "user", "--jq", '.login + " " + (.id|tostring)'], "读取 GitHub 账号").split(" ");
+  if (wantAccount && login.toLowerCase() !== wantAccount) {
+    fail(`当前登录的 GitHub 账号是 ${login}，不是 ${args[accountFlag + 1]}。\n请用户在终端运行：gh auth switch --user ${args[accountFlag + 1]}，然后再发布。`, 3);
+  }
+  console.log(`发布到 GitHub 账号：${login}`);
   const userSite = `${login.toLowerCase()}.github.io`;
   const exists = (name) => run("gh", ["api", `repos/${login}/${name}`, "--jq", ".name"]).ok;
   const ours = (name) => run("gh", ["api", `repos/${login}/${name}/contents/${MARKER}`, "--jq", ".name"]).ok;
@@ -105,6 +113,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // 每次发布写一个唯一编号，用来确认网上显示的已经是这次的新版本，而不是旧版本
   const publishId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   fs.writeFileSync(path.join(tmp, "published.txt"), publishId + "\n");
+  // 给 index.html 里引用的脚本和样式加上版本号，访客的浏览器就不会继续用旧版本的缓存
+  const indexPath = path.join(tmp, "index.html");
+  const indexHtml = fs.readFileSync(indexPath, "utf8")
+    .replace(/((?:src|href)="(?:content\.js|assets\/[^"?#]+\.(?:js|css)))(?:\?v=[^"]*)?"/g, `$1?v=${publishId}"`);
+  fs.writeFileSync(indexPath, indexHtml);
   const g = (a, what) => must("git", a, what, { cwd: tmp });
   g(["init", "-q", "-b", "main"], "初始化");
   g(["config", "user.name", login], "设置提交者");

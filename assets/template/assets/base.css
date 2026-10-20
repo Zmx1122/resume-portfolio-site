@@ -343,6 +343,60 @@ dialog { color: var(--text); }
   .cv-entry, .cv-dl div { grid-template-columns: 170px 1fr; }
 }
 
+/* ---------- 路线小地图（首页右侧） ---------- */
+
+.journey { margin: 0; padding: 16px 12px 8px; border: var(--border); border-radius: var(--radius); background: var(--surface); max-width: 340px; width: 100%; justify-self: center; }
+.journey-title { font-size: 0.78rem; color: var(--muted); text-transform: var(--kicker-transform); letter-spacing: var(--kicker-tracking); margin: 0 0 4px 6px; }
+.journey-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.jm-route { fill: none; stroke: var(--muted); stroke-width: 2.5; stroke-dasharray: 7 7; stroke-linecap: round; opacity: 0.55; }
+.jm-pin { fill: #d93025; stroke: #ffffff; stroke-width: 1.5; }
+.jm-pin-dot { fill: #ffffff; }
+.jm-stop text { paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+.jm-name { font-family: var(--font-head); font-weight: 700; font-size: 15px; fill: var(--text); }
+.jm-sub { font-size: 11.5px; fill: var(--muted); }
+.jm-label { font-size: 11.5px; fill: var(--text); }
+.hero-inner.has-journey { grid-template-columns: 1fr; }
+@media (min-width: 720px) { .hero-inner.has-journey { grid-template-columns: auto 1fr; } .hero-inner.has-journey .journey { grid-column: 1 / -1; } }
+@media (min-width: 1040px) {
+  .hero-inner.has-journey { grid-template-columns: auto 1fr minmax(260px, 320px); }
+  .hero-inner.has-journey .journey { grid-column: auto; align-self: center; }
+}
+
+/* ---------- 里程碑路径 ---------- */
+
+.milestone-path { list-style: none; margin: 0; padding: 30px 0 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); gap: 20px; position: relative; overflow-x: auto; }
+.milestone-path::before { content: ""; position: absolute; top: 12px; inset-inline: 8px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--line), var(--accent)); }
+[dir="rtl"] .milestone-path::before { background: linear-gradient(270deg, var(--line), var(--accent)); }
+.milestone { position: relative; padding-block-end: 4px; }
+.milestone-dot { position: absolute; top: -26px; inset-inline-start: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); border: 3px solid var(--accent); }
+.milestone:last-child .milestone-dot { background: var(--accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent); }
+.milestone-date { margin: 0 0 4px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+.milestone-title { font-size: 1rem; margin: 0 0 4px; line-height: 1.3; }
+.milestone-title a { color: inherit; }
+.milestone-text { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.45; }
+@media (max-width: 719px) {
+  .milestone-path { grid-auto-flow: row; padding: 0; padding-inline-start: 30px; overflow: visible; }
+  .milestone-path::before { top: 6px; bottom: 6px; inset-inline-start: 7px; inset-inline-end: auto; width: 3px; height: auto; background: linear-gradient(180deg, var(--line), var(--accent)); }
+  .milestone-dot { top: 2px; inset-inline-start: -30px; }
+}
+
+/* ---------- 论文卡片 ---------- */
+
+.pub-gallery { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.pub-card { background: var(--bg); border: var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+.pub-cover { display: block; background: #ffffff; border-block-end: var(--border); aspect-ratio: 4 / 3; overflow: hidden; }
+.pub-cover-img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.pub-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.pub-body .kicker { margin: 0; }
+.pub-title { font-size: 1.02rem; margin: 0; line-height: 1.35; }
+.pub-title a { color: var(--text); text-decoration: none; }
+.pub-title a:hover { text-decoration: underline; }
+.pub-authors, .pub-meta, .pub-summary { margin: 0; font-size: 0.88rem; }
+.pub-body .small-link { margin-block-start: auto; padding-block-start: 6px; }
+.paper-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.paper-list .badge { vertical-align: 2px; }
+.cv-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
 /* ---------- 页脚 ---------- */
 
 .site-footer { border-block-start: var(--border); padding-block: 24px; color: var(--muted); font-size: 0.85rem; }
@@ -358,7 +412,17 @@ dialog { color: var(--text); }
   a { color: inherit; text-decoration: none; }
   .cv { padding: 0; }
   .cv-entry, .card, .tl-item { break-inside: avoid; }
-  @page { margin: 16mm; }
+  @page { margin: 14mm 15mm; }
+  /* 风格文件会改背景色，打印时一律白底黑字 */
+  html, body, main, .cv, .cv-sheet { background: #ffffff !important; color: #000000 !important; }
+  body { font-size: 9.5pt; line-height: 1.38; }
+  .cv-head h1 { font-size: 20pt; margin-block-end: 2px; }
+  .cv-headline { font-size: 10pt; margin-block: 6px 0; }
+  .cv h2 { margin-block: 12px 5px; font-size: 9pt; break-after: avoid; }
+  .cv-entry, .cv-dl div { grid-template-columns: 105px 1fr !important; margin-block-end: 5px; }
+  .cv-entry ul { margin-block: 1px 0; }
+  .cv li { margin-block-end: 1px; }
+  .cv p { margin-block-end: 2px; }
 }
 
 /* ---------- 减少动态效果 ---------- */

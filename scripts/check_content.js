@@ -4,6 +4,7 @@
 // "错误"必须修好；"提醒"请看一眼，确认没问题即可。有错误时退出码为 1。
 
 const fs = require("fs");
+const { spawnSync } = require("child_process");
 const path = require("path");
 const vm = require("vm");
 
@@ -128,7 +129,6 @@ if ((S.stories || []).length && featured === 0) warn("没有精选故事，首�
 if (featured > 4) warn(`有 ${featured} 个精选故事，建议不超过 4 个`);
 // 同一个故事挂在两处会在时间线上出现两次
 for (const sec of ["work", "education", "projects"]) for (const e of S[sec] || []) for (const id of e.stories || []) (storyOwners[id] = storyOwners[id] || []).push(`${sec}.${e.id}`);
-for (const a of S.awards || []) if (a.story) (storyOwners[a.story] = storyOwners[a.story] || []).push(`awards.${a.id}`);
 for (const [id, owners] of Object.entries(storyOwners)) if (owners.length > 1) warn(`故事 "${id}" 同时挂在 ${owners.join("、")}，时间线上会出现两次`);
 
 for (const c of S.certificates || []) { ref(`certificates.${c.id}.document`, c.document, ids.documents, "文件"); needSources(c, `certificates.${c.id}`); }
@@ -146,9 +146,23 @@ for (const d of S.documents || []) {
 }
 for (const s of S.skills || []) if (typeof s.name !== "string" && !isLangObj(s.name)) err(`skills.${s.id}.name：应该是文字或多语言对象`);
 
+// ---------- 日期：已经结束的事情不能显示成"至今" ----------
+
+for (const e of S.education || []) if (!e.endDate && !e.expectedEnd) warn(`education.${e.id}：没有 endDate 也没有 expectedEnd，页面会显示"至今"。已经毕业的写 endDate，在读的写 expectedEnd`);
+const openWork = (S.work || []).filter((w) => !w.endDate);
+if (openWork.length > 1) warn(`有 ${openWork.length} 段工作没有 endDate（${openWork.map((w) => w.id).join("、")}），都会显示"至今"。确认是否真的同时在做`);
+for (const s of S.stories || []) {
+  if (s.period && s.period.start && !s.period.end && !s.period.date && s.kind !== "work") warn(`stories.${s.id}：period 只有 start，会显示"至今"。已经结束的写 end，只有一个时间点的写 { date }；确实还在进行的可以忽略这条`);
+}
+for (const [i, m] of (S.milestones || []).entries()) {
+  if (!m.date || !/^\d{4}(-\d{2})?$/.test(m.date)) err(`milestones[${i}]：date 要写成 "YYYY" 或 "YYYY-MM"（用于排序）`);
+  if (m.story) ref(`milestones[${i}].story`, m.story, ids.stories, "故事");
+}
+if ((S.journey || []).length === 1) warn("journey 只有一站，路线小地图至少需要两站才会显示");
+
 // ---------- 设置 ----------
 
-const SECTIONS = ["stories", "experience", "education", "publications", "skills", "documents", "about"];
+const SECTIONS = ["milestones", "stories", "experience", "education", "publications", "skills", "documents", "about"];
 (meta.sections || []).forEach((x) => { if (!SECTIONS.includes(x)) err(`meta.sections 里的 "${x}" 不存在，可用：${SECTIONS.join(", ")}`); });
 if (meta.layout && !["compact", "editorial"].includes(meta.layout)) err(`meta.layout 只能是 compact 或 editorial`);
 const today = new Date().toISOString().slice(0, 7);
@@ -170,6 +184,7 @@ needFile(b.image, "basics.image");
 if (b.cv) for (const [l, u] of Object.entries(b.cv)) needFile(u, `basics.cv.${l}`);
 for (const s of S.stories || []) (s.media || []).forEach((m, i) => { if ((m.type || "image") !== "link") needFile(m.src, `stories.${s.id}.media[${i}]`); });
 for (const d of S.documents || []) { needFile(d.file, `documents.${d.id}.file`); needFile(d.thumbnail, `documents.${d.id}.thumbnail`); }
+(S.publications || []).forEach((p, i) => needFile(p.image || p.media, `publications[${i}].image`));
 
 const indexHtml = path.join(siteDir, "index.html");
 if (fs.existsSync(indexHtml)) {
@@ -183,16 +198,43 @@ if (fs.existsSync(indexHtml)) {
   if (lang && langs[0] && lang !== langs[0]) warn(`index.html 的 lang 是 "${lang}"，默认语言是 "${langs[0]}"`);
 }
 // 放在 img/ 和 docs/ 里却没被引用的文件：部署后同样能被下载
-for (const dir of ["assets/img", "assets/docs"]) {
+function listFiles(dir) {
   const abs = path.join(siteDir, dir);
-  if (!fs.existsSync(abs)) continue;
-  for (const f of fs.readdirSync(abs)) {
-    if (f.startsWith(".")) continue;
-    const rel = path.normalize(path.join(dir, f));
-    if (!referenced.has(rel)) warn(`${rel} 没有被 content.js 用到，但部署后任何人都能下载。演示文件或不公开的文件请删掉`);
-  }
+  if (!fs.existsSync(abs)) return [];
+  return fs.readdirSync(abs).flatMap((f) => {
+    if (f.startsWith(".")) return [];
+    const rel = path.join(dir, f);
+    return fs.statSync(path.join(siteDir, rel)).isDirectory() ? listFiles(rel) : [path.normalize(rel)];
+  });
+}
+for (const rel of [...listFiles("assets/img"), ...listFiles("assets/docs")]) {
+  if (!referenced.has(rel)) warn(`${rel} 没有被 content.js 用到，但部署后任何人都能下载。演示文件或不公开的文件请删掉`);
 }
 for (const f of fs.readdirSync(siteDir)) if (/^preview-.*\.html$/i.test(f)) warn(`${f} 是风格预览文件，选定风格后请删掉，不要发布`);
+// ---------- 隐私：content.js 和要发布的 PDF 里不能有电话、出生日期、住址 ----------
+
+const PRIVATE = [
+  [/(\+\d{2}[\s\d/().-]{8,}\d|\b0\d{3,4}[\s/-]?\d{5,}\b)/, "电话号码"],
+  [/(geboren am|geb\.\s*am|Geburtsdatum|date of birth|born on|出生日期|出生于)/i, "出生日期"],
+  [/\b[A-ZÄÖÜ][\wäöüß-]*(straße|strasse|str\.|weg|allee|platz|gasse)\s*\d+/i, "街道地址"],
+  [/(Matrikel(nummer|-?nr)|Steuer-?ID|身份证号|护照号|passport no)/i, "证件或学号"],
+];
+const scan = (text, where) => { for (const [re, what] of PRIVATE) { const m = text.match(re); if (m) err(`${where} 里好像有${what}："${m[0].trim().slice(0, 40)}"。不公开的信息不能出现在网站文件夹的任何文件里`); } };
+scan(fs.readFileSync(file, "utf8").replace(/^\s*\/\/.*$/gm, ""), "content.js");
+function pdfText(p) {
+  let r = spawnSync("pdftotext", ["-q", p, "-"], { encoding: "utf8" });
+  if (!r.error && r.status === 0) return r.stdout;
+  r = spawnSync("python3", ["-c", "import sys;from pypdf import PdfReader;print(' '.join((x.extract_text() or '') for x in PdfReader(sys.argv[1]).pages))", p], { encoding: "utf8" });
+  if (!r.error && r.status === 0) return r.stdout;
+  return null;
+}
+for (const rel of listFiles("assets").filter((f) => /\.pdf$/i.test(f))) {
+  const text = pdfText(path.join(siteDir, rel));
+  if (text === null) warn(`${rel}：没法读取 PDF 文字（需要 pdftotext 或 python3 + pypdf），请人工确认里面没有电话、出生日期、住址`);
+  else if (!text.trim()) warn(`${rel}：是扫描件，读不到文字，请人工确认里面没有电话、出生日期、住址`);
+  else scan(text, rel);
+}
+
 for (const bad of ["_work", "我的简历网站"]) if (fs.existsSync(path.join(siteDir, bad))) err(`网站文件夹里有 ${bad}/，里面是工作记录，部署时会被公开。把它移出 ${path.basename(siteDir)}/`);
 
 // ---------- 输出 ----------

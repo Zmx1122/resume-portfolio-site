@@ -123,7 +123,7 @@
     documents: list("certificates").length + list("awards").length + visibleDocs.length + list("languages").length > 0,
     about: !!SITE.about || visibleQuotes.length > 0
   };
-  var DEFAULT_SECTIONS = ["stories", "experience", "publications", "skills", "documents", "about"];
+  var DEFAULT_SECTIONS = ["milestones", "stories", "experience", "publications", "skills", "documents", "about"];
   var SECTIONS = (Array.isArray(META.sections) && META.sections.length ? META.sections : DEFAULT_SECTIONS);
 
   function paramOr(name, allowed, fallback) {
@@ -265,11 +265,11 @@
     });
     if (langs.length) facts.push({ k: U("languages"), v: langs.join(" · ") });
 
-    var cv = b.cv ? safeUrl(b.cv[L] || b.cv[DEFAULT_LANG] || b.cv[Object.keys(b.cv)[0]]) : "";
     var email = b.email && b.email.show !== false ? b.email.value : "";
+    var journey = journeyMap();
 
     return html`<section class="hero" aria-labelledby="hero-name">
-      <div class="wrap hero-inner">
+      <div class="wrap hero-inner${journey ? " has-journey" : ""}">
         ${b.image ? html`<div class="hero-photo">${img(b.image, b.name, "avatar")}</div>` : ""}
         <div class="hero-text">
           <h1 class="hero-name" id="hero-name">${b.name || ""}</h1>
@@ -281,10 +281,64 @@
           ${a && a.note ? html`<p class="hero-note">${T(a.note)}</p>` : ""}
           <div class="actions">
             ${email ? html`<a class="btn btn-primary" href="${"mailto:" + email}">${U("contact_me")}</a>` : html`<a class="btn btn-primary" href="${href("home")}" data-scroll="contact">${U("contact_me")}</a>`}
-            ${cv ? html`<a class="btn" href="${cv}" target="_blank" rel="noopener">${U("download_cv")}</a>` : ""}
-            <a class="btn btn-quiet" href="${href("cv")}">${U("quick_view")}</a>
+            <a class="btn" href="${href("cv")}">${U("quick_view")}</a>
           </div>
         </div>
+        ${journey}
+      </div>
+    </section>`;
+  }
+
+  // 首页右侧的路线小地图：S 形曲线，每一站一个红色图钉。数据来自 content.js 的 journey
+  function journeyMap() {
+    var stops = list("journey");
+    if (stops.length < 2) return "";
+    var W = 300, top = 34, gap = 92, H = top * 2 + gap * (stops.length - 1);
+    var pts = stops.map(function (st, i) { return { x: i % 2 ? 214 : 86, y: top + i * gap, st: st }; });
+    var d = "M" + pts[0].x + " " + pts[0].y;
+    for (var i = 1; i < pts.length; i++) {
+      var a = pts[i - 1], c = pts[i], my = (a.y + c.y) / 2;
+      d += " C" + a.x + " " + my + " " + c.x + " " + my + " " + c.x + " " + c.y;
+    }
+    var pin = function (x, y) {
+      return raw('<path class="jm-pin" d="M' + x + " " + (y + 2) + " c-9 -12 -14 -18 -14 -25 a14 14 0 1 1 28 0 c0 7 -5 13 -14 25 z\"/>" +
+        '<circle class="jm-pin-dot" cx="' + x + '" cy="' + (y - 23) + '" r="5"/>');
+    };
+    return html`<figure class="journey" aria-label="${U("journey")}">
+      <figcaption class="journey-title">${U("journey")}</figcaption>
+      <svg class="journey-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${stops.map(function (st) { return st.name; }).join(" → ")}">
+        <path class="jm-route" d="${d}"/>
+        ${pts.map(function (p, i) {
+          var left = i % 2 === 1;
+          var tx = left ? p.x - 26 : p.x + 26;
+          var anchor = left ? "end" : "start";
+          return html`<g class="jm-stop">
+            ${pin(p.x, p.y)}
+            <text x="${tx}" y="${p.y - 22}" text-anchor="${anchor}" class="jm-name">${p.st.name}</text>
+            <text x="${tx}" y="${p.y - 4}" text-anchor="${anchor}" class="jm-sub">${[T(p.st.place), p.st.years].filter(Boolean).join(" · ")}</text>
+            ${p.st.label ? html`<text x="${tx}" y="${p.y + 13}" text-anchor="${anchor}" class="jm-label">${T(p.st.label)}</text>` : ""}
+          </g>`;
+        })}
+      </svg>
+    </figure>`;
+  }
+
+  // 里程碑："一路升级"的路径。数据来自 content.js 的 milestones，按日期排序
+  function milestonesSection() {
+    var ms = list("milestones").slice().sort(function (a, b) { return String(a.date || "").localeCompare(String(b.date || "")); });
+    if (!ms.length) return "";
+    return html`<section class="section section-milestones" id="milestones" aria-labelledby="milestones-title">
+      <div class="wrap">
+        ${sectionTitle("milestones", U("milestones"))}
+        <ol class="milestone-path">${ms.map(function (m) {
+          var title = T(m.title);
+          return html`<li class="milestone">
+            <span class="milestone-dot" aria-hidden="true"></span>
+            <p class="milestone-date">${m.label ? T(m.label) : fmtDate(m.date)}</p>
+            <h3 class="milestone-title">${m.story && get("stories", m.story) ? html`<a href="${href("story", m.story)}">${title}</a>` : title}</h3>
+            ${m.text ? html`<p class="milestone-text">${T(m.text)}</p>` : ""}
+          </li>`;
+        })}</ol>
       </div>
     </section>`;
   }
@@ -315,6 +369,9 @@
       out.push({ kind: "project", start: p.startDate, end: p.endDate, sortEnd: p.endDate || "9999", item: p });
     });
     if (kinds.indexOf("awards") >= 0) list("awards").forEach(function (a) {
+      // 获奖已经是某段经历里的故事（比如工作期间的黑客松），就不在时间线上再列一次
+      var st = a.story && get("stories", a.story);
+      if (st && parentOf(st.parent)) return;
       out.push({ kind: "award", start: null, end: a.date, sortEnd: a.date || "0000", item: a });
     });
     return out.sort(function (x, y) {
@@ -343,6 +400,7 @@
         <div class="tl-body">
           <h3 class="tl-title">${[T(it.studyType), T(it.area)].filter(Boolean).join(", ")} <span class="tl-org">· ${it.url ? html`<a href="${safeUrl(it.url)}" target="_blank" rel="noopener">${it.institution}</a>` : it.institution}</span></h3>
           ${score ? html`<p class="tl-meta">${U("grade")}: ${score}</p>` : ""}
+          ${(it.honors || []).length ? html`<p><span class="label">${U("honors")}:</span> ${it.honors.map(T).join(" · ")}</p>` : ""}
           ${it.thesis ? html`<p><span class="label">${U("thesis")}:</span> ${it.thesis.story && get("stories", it.thesis.story) ? html`<a href="${href("story", it.thesis.story)}">${T(it.thesis.title)}</a>` : T(it.thesis.title)}${it.thesis.grade ? " (" + it.thesis.grade + ")" : ""}</p>` : ""}
           ${(it.courses || []).length ? html`<p><span class="label">${U("courses")}:</span> ${it.courses.map(function (c) { return T(c.name) + (c.grade ? " (" + c.grade + ")" : ""); }).join(" · ")}</p>` : ""}
           ${storyLinks((it.stories || []).filter(function (id) { return !(it.thesis && it.thesis.story === id); }))}
@@ -388,12 +446,26 @@
     return html`<section class="section section-publications" id="publications" aria-labelledby="publications-title">
       <div class="wrap">
         ${sectionTitle("publications", U("publications"))}
-        <ul class="plain-list pub-list">${pubs.map(function (p) {
-          var title = safeUrl(p.url) ? html`<a href="${safeUrl(p.url)}" target="_blank" rel="noopener">${T(p.name)}</a>` : T(p.name);
-          return html`<li><strong>${title}</strong><br><span class="muted">${[p.publisher, fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</span>${p.summary ? html`<br>${T(p.summary)}` : ""}${p.story && get("stories", p.story) ? html` <a class="small-link" href="${href("story", p.story)}">${U("view_story")} →</a>` : ""}</li>`;
-        })}</ul>
+        <div class="pub-gallery">${pubs.map(pubCard)}</div>
       </div>
     </section>`;
+  }
+
+  function pubCard(p) {
+    var link = safeUrl(p.url);
+    var cover = p.image || p.media;
+    var title = link ? html`<a href="${link}" target="_blank" rel="noopener">${T(p.name)}</a>` : T(p.name);
+    return html`<article class="pub-card">
+      ${cover ? html`<a class="pub-cover" href="${link || "#"}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">${img(cover, "", "pub-cover-img")}</a>` : ""}
+      <div class="pub-body">
+        ${p.role ? html`<p class="kicker">${T(p.role)}</p>` : ""}
+        <h3 class="pub-title">${title}</h3>
+        ${p.authors ? html`<p class="pub-authors">${p.authors}</p>` : ""}
+        <p class="muted pub-meta">${[T(p.publisher), fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</p>
+        ${p.summary ? html`<p class="pub-summary">${T(p.summary)}</p>` : ""}
+        ${p.story && get("stories", p.story) ? html`<a class="small-link" href="${href("story", p.story)}">${U("view_story")} →</a>` : ""}
+      </div>
+    </article>`;
   }
 
   function educationSection() {
@@ -524,6 +596,7 @@
     stories: featuredSection,
     experience: function () { return experienceSection(false); },
     education: educationSection,
+    milestones: milestonesSection,
     publications: publicationsSection,
     skills: function () { return skillsSection(false); },
     documents: function () { return documentsSection(false); },
@@ -535,6 +608,7 @@
     if (layout === "compact") {
       SECTIONS.forEach(function (s) { if (SECTION_RENDERERS[s]) parts.push(SECTION_RENDERERS[s]()); });
     } else {
+      parts.push(milestonesSection());
       parts.push(featuredSection());
       var recent = timelineEntries(["work", "education"]).slice(0, 4);
       if (recent.length) parts.push(html`<section class="section section-experience is-short" aria-labelledby="recent-title">
@@ -582,6 +656,8 @@
     var evidence = (s.evidence || []).map(function (d) { return get("documents", d); }).filter(function (d) { return d && d.visibility !== "private"; });
     var quotes = (s.quotes || []).map(function (q) { return get("quotes", q); }).filter(function (q) { return q && visibleQuotes.indexOf(q) >= 0; });
     var siblings = stories.filter(function (x) { return x !== s && x.parent && x.parent === s.parent; });
+    var papers = list("publications").filter(function (p) { return p.story === s.id; })
+      .sort(function (a, b) { return (b.releaseDate || "").localeCompare(a.releaseDate || ""); });
     var backTarget = layout === "compact" ? href("home") : href("experience");
 
     return html`<article class="story">
@@ -602,6 +678,10 @@
       ${others.length ? html`<div class="wrap wrap-wide gallery">${others.map(function (m) { return mediaFigure(m, group, false); })}</div>` : ""}
       <div class="wrap story-foot">
         ${quotes.length ? html`<div class="quotes">${quotes.map(quoteBlock)}</div>` : ""}
+        ${papers.length ? html`<div class="story-papers"><h2 class="subhead">${U("publications")}</h2><ul class="paper-list">${papers.map(function (p) {
+          var link = safeUrl(p.url);
+          return html`<li>${p.role ? html`<span class="badge">${T(p.role)}</span> ` : ""}<strong>${link ? html`<a href="${link}" target="_blank" rel="noopener">${T(p.name)}</a>` : T(p.name)}</strong><br><span class="muted">${[p.authors, T(p.publisher), fmtDate(p.releaseDate)].filter(Boolean).join(" · ")}</span></li>`;
+        })}</ul></div>` : ""}
         ${evidence.length ? html`<div class="evidence"><h2 class="subhead">${U("evidence")}</h2><ul class="doc-grid doc-grid-small">${evidence.map(docCard)}</ul></div>` : ""}
         ${(s.skills || []).length ? html`<div class="story-skills"><h2 class="subhead">${U("skills_used")}</h2>${skillTags(s.skills)}</div>` : ""}
         ${siblings.length ? html`<div class="siblings"><h2 class="subhead">${U("more_in", { name: orgName(p) })}</h2>${storyLinks(siblings.map(function (x) { return x.id; }))}</div>` : ""}
@@ -634,6 +714,7 @@
 
   function cvPage() {
     var b = SITE.basics || {};
+    var cvFile = b.cv ? safeUrl(b.cv[L] || b.cv[DEFAULT_LANG] || b.cv[Object.keys(b.cv)[0]]) : "";
     var email = b.email && b.email.show !== false ? b.email.value : "";
     var phone = b.phone && b.phone.show !== false ? b.phone.value : "";
     var contact = [b.location && b.location.city, email, phone].concat((b.profiles || []).map(function (p) { return p.url ? p.url.replace(/^https?:\/\/(www\.)?/, "") : ""; })).filter(Boolean);
@@ -643,7 +724,10 @@
       <div class="wrap cv-sheet">
         <div class="cv-tools no-print">
           <a href="${href("home")}"><span aria-hidden="true" class="arrow arrow-back">←</span> ${U("back")}</a>
-          <button type="button" class="btn" data-action="print">${U("print")}</button>
+          <span class="cv-actions">
+            ${cvFile ? html`<a class="btn btn-primary" href="${cvFile}" target="_blank" rel="noopener">${U("download_cv")}</a>` : ""}
+            <button type="button" class="btn" data-action="print">${U("print")}</button>
+          </span>
         </div>
         <header class="cv-head">
           <h1>${b.name || ""}</h1>
@@ -663,7 +747,7 @@
           var label = U("cat_" + cat);
           return html`<div><dt>${label === "cat_" + cat ? cat : label}</dt><dd>${groups[cat].join(", ")}</dd></div>`;
         })}</dl>` : ""}
-        ${list("publications").length ? html`<h2>${U("publications")}</h2><ul>${list("publications").map(function (p) { return html`<li>${T(p.name)}${p.publisher ? ", " + p.publisher : ""} ${fmtDate(p.releaseDate)}</li>`; })}</ul>` : ""}
+        ${list("publications").length ? html`<h2>${U("publications")}</h2><ul>${list("publications").map(function (p) { return html`<li>${T(p.name)}${p.publisher ? ", " + T(p.publisher) : ""} ${fmtDate(p.releaseDate)}</li>`; })}</ul>` : ""}
         ${list("languages").length ? html`<h2>${U("languages")}</h2><p>${list("languages").map(function (l) { return T(l.language) + " " + (l.cefr === "native" ? "(" + U("native") + ")" : l.cefr ? "(" + l.cefr + ")" : ""); }).join(" · ")}</p>` : ""}
         ${list("certificates").length + list("awards").length ? html`<h2>${U("certificates")} / ${U("awards")}</h2><ul>${list("certificates").map(function (c) { return html`<li>${c.name}${c.level ? " " + c.level : ""}, ${c.issuer || ""} ${fmtDate(c.date)}</li>`; })}${list("awards").map(function (a) { return html`<li>${T(a.title)}, ${a.awarder || ""} ${fmtDate(a.date)}</li>`; })}</ul>` : ""}
       </div>
@@ -726,7 +810,7 @@
   var linkedStyle = styleLink && (styleLink.getAttribute("href").match(/styles\/([\w-]+)\.css/) || [])[1];
   var currentStyle = paramOr("style", STYLES, null) || linkedStyle ||
     (META.style && STYLES.indexOf(META.style) >= 0 ? META.style : null) || "swiss-minimal";
-  if (styleLink && styleLink.getAttribute("href") !== "assets/styles/" + currentStyle + ".css") {
+  if (styleLink && linkedStyle !== currentStyle) {
     styleLink.setAttribute("href", "assets/styles/" + currentStyle + ".css");
   }
 
