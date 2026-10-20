@@ -27,12 +27,12 @@
 
 ### 先看看做出来是什么样
 
-打开[在线演示](https://zmx1122.github.io/resume-portfolio-demo/)，这是用虚构人物"陈梅"的材料做出来的网站。同一份内容换成其他风格：
-[报纸编辑风](https://zmx1122.github.io/resume-portfolio-demo/?style=editorial) ·
+打开[在线演示](https://zmx1122.github.io/resume-portfolio-demo/)，这是用虚构人物"陈梅"的材料做出来的网站：本科和硕士、实习和工作经历、黑客松获奖、论文答辩照片、学位证书和推荐信，都有图文佐证（所有人物、机构和文件都是虚构的，带"样本"水印）。同一份内容换成其他风格：
+[瑞士极简](https://zmx1122.github.io/resume-portfolio-demo/?style=swiss-minimal) ·
 [Bento 卡片](https://zmx1122.github.io/resume-portfolio-demo/?style=bento) ·
 [暗色科技](https://zmx1122.github.io/resume-portfolio-demo/?style=terminal-dark) ·
 [温暖作品集](https://zmx1122.github.io/resume-portfolio-demo/?style=warm-portfolio) ·
-[学术简约](https://zmx1122.github.io/resume-portfolio-demo/?style=academic)（默认是瑞士极简）
+[学术简约](https://zmx1122.github.io/resume-portfolio-demo/?style=academic)（默认是报纸编辑风）
 
 ### 用哪个 AI
 
